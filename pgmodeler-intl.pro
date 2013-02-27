@@ -9,5 +9,6 @@ include(main/main.pro)
 
 TRANSLATIONS = lang/pt_BR.ts \
                lang/zh_CN.ts \
-               lang/fr_FR.ts
+               lang/fr_FR.ts \
+               lang/ru_RU.ts
 CODECFORTR = UTF8
