@@ -160,6 +160,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags) : QMainWindow(par
 	connect(action_next,SIGNAL(triggered(bool)),this,SLOT(setCurrentModel()));
 	connect(action_previous,SIGNAL(triggered(bool)),this,SLOT(setCurrentModel()));
 	connect(action_about,SIGNAL(triggered(bool)),about_form,SLOT(show()));
+	connect(action_wiki,SIGNAL(triggered(bool)),this,SLOT(openWiki()));
 
 	connect(action_inc_zoom,SIGNAL(triggered(bool)),this,SLOT(applyZoom()));
 	connect(action_dec_zoom,SIGNAL(triggered(bool)),this,SLOT(applyZoom()));
@@ -389,6 +390,7 @@ void MainWindow::closeEvent(QCloseEvent *)
 	bool save_conf=false, modified=false;
 	int i=0;
 
+	this->overview_wgt->close();
 
 	//Checking if there is modified models and ask the user to save them before close the application
 	if(models_tbw->count() > 0)
@@ -833,7 +835,10 @@ void MainWindow::closeModel(int model_id)
 void MainWindow::updateModelTabName(void)
 {
 	if(current_model && current_model->db_model->getName()!=models_tbw->tabText(models_tbw->currentIndex()))
+	{
 		models_tbw->setTabText(models_tbw->currentIndex(), Utf8String::create(current_model->db_model->getName()));
+
+	}
 }
 
 void MainWindow::updateModelsConfigurations(void)
@@ -890,22 +895,24 @@ void MainWindow::saveModel(ModelWidget *model)
 			//If the action that calls the slot were the 'save as' or the model filename isn't set
 			if(sender()==action_save_as || model->filename.isEmpty())
 			{
-				QFileDialog arquivo_dlg;
+				QFileDialog file_dlg;
 
-				arquivo_dlg.setWindowTitle(trUtf8("Save '%1' as...").arg(model->db_model->getName()));
-				arquivo_dlg.setFilter(tr("Database model (*.dbm);;All files (*.*)"));
-				arquivo_dlg.setFileMode(QFileDialog::AnyFile);
-				arquivo_dlg.setAcceptMode(QFileDialog::AcceptSave);
-				arquivo_dlg.setModal(true);
+				file_dlg.setWindowTitle(trUtf8("Save '%1' as...").arg(model->db_model->getName()));
+				file_dlg.setFilter(tr("Database model (*.dbm);;All files (*.*)"));
+				file_dlg.setFileMode(QFileDialog::AnyFile);
+				file_dlg.setAcceptMode(QFileDialog::AcceptSave);
+				file_dlg.setModal(true);
 
-				if(arquivo_dlg.exec()==QFileDialog::Accepted)
+				if(file_dlg.exec()==QFileDialog::Accepted)
 				{
-					if(!arquivo_dlg.selectedFiles().isEmpty())
-						model->saveModel(arquivo_dlg.selectedFiles().at(0));
+					if(!file_dlg.selectedFiles().isEmpty())
+						model->saveModel(file_dlg.selectedFiles().at(0));
 				}
 			}
 			else
 				model->saveModel();
+
+			this->setWindowTitle(window_title + " - " + QDir::toNativeSeparators(model->getFilename()));
 		}
 	}
 	catch(Exception &e)
@@ -1098,4 +1105,9 @@ void MainWindow::showOverview(bool show)
 		overview_wgt->show(current_model);
 	else if(!show)
 		overview_wgt->close();
+}
+
+void MainWindow::openWiki(void)
+{
+	QDesktopServices::openUrl(QUrl(GlobalAttributes::PGMODELER_WIKI));
 }
