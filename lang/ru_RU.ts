@@ -594,17 +594,17 @@ The complete text of GPLv3 is at LICENSE file on source code root directory. Als
     <message>
         <location filename="../libpgmodeler_ui/ui/baseobjectwidget.ui" line="94"/>
         <source>icone</source>
-        <translation>Пиктограмма</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/baseobjectwidget.ui" line="125"/>
         <source>Comment:</source>
-        <translation>Комментарий:</translation>
+        <translation>Коммент.:</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/baseobjectwidget.ui" line="173"/>
         <source>Tablespace:</source>
-        <translation>Табличное пространство:</translation>
+        <translation>Табл. пространство:</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/baseobjectwidget.ui" line="186"/>
@@ -649,7 +649,7 @@ The complete text of GPLv3 is at LICENSE file on source code root directory. Als
     <message>
         <location filename="../libpgmodeler_ui/src/baseobjectwidget.cpp" line="436"/>
         <source>The field(s) or value(s) highlighted on the form is(are) for the exclusive use and/or mandatory in specific versions of PostgreSQL. Failure to complete that may cause errors in the generation of SQL code for each version shown in tool tips of the highlighted fields.</source>
-        <translation>Выделенные поля и значения относятся к особенным случаям использования или обязательны для конкретных версий PostgreSQL. Их неправильное использование может привести к в SQL-коде. Номера версий отображаются во всплывающих подсказках. </translation>
+        <translation>Выделенные поля и значения относятся к особенным случаям использования или обязательны для конкретных версий PostgreSQL. Их неправильное использование может привести к ошибкам в SQL-коде. Номера версий отображаются во всплывающих подсказках.</translation>
     </message>
 </context>
 <context>
@@ -710,12 +710,12 @@ The complete text of GPLv3 is at LICENSE file on source code root directory. Als
     <message>
         <location filename="../libpgmodeler_ui/ui/columnwidget.ui" line="38"/>
         <source>Default Value:</source>
-        <translation>Значение по умолчанию:</translation>
+        <translation>По умолчанию:</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/columnwidget.ui" line="79"/>
         <source>Not Null:</source>
-        <translation></translation>
+        <translation>Не пустое:</translation>
     </message>
 </context>
 <context>
@@ -768,7 +768,7 @@ The complete text of GPLv3 is at LICENSE file on source code root directory. Als
     <message>
         <location filename="../libpgmodeler_ui/src/configurationform.cpp" line="86"/>
         <source>Any modification made until now in the current section will be lost! Do you really want to restore default settings?</source>
-        <translation>Все изменения, сделанные ранее в текущем разделе, будут потеряны! Вы действительно хотите вернуться к настройкам по умолчанию?</translation>
+        <translation>Все изменения, сделанные ранее в текущем разделе будут потеряны! Вы действительно хотите вернуться к настройкам по умолчанию?</translation>
     </message>
 </context>
 <context>
@@ -980,7 +980,7 @@ The complete text of GPLv3 is at LICENSE file on source code root directory. Als
     <message>
         <location filename="../libpgmodeler_ui/ui/constraintwidget.ui" line="227"/>
         <source>Deferrable:</source>
-        <translation>Доп. задержку:</translation>
+        <translation>С задержкой:</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/constraintwidget.ui" line="268"/>
@@ -990,12 +990,12 @@ The complete text of GPLv3 is at LICENSE file on source code root directory. Als
     <message>
         <location filename="../libpgmodeler_ui/ui/constraintwidget.ui" line="306"/>
         <source>ON DELETE:</source>
-        <translation></translation>
+        <translation>При удалении:</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/constraintwidget.ui" line="347"/>
         <source>ON UPDATE:</source>
-        <translation></translation>
+        <translation>При обновлении:</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/constraintwidget.ui" line="374"/>
@@ -1033,7 +1033,7 @@ The complete text of GPLv3 is at LICENSE file on source code root directory. Als
     <message>
         <location filename="../libpgmodeler_ui/src/constraintwidget.cpp" line="61"/>
         <source>Columns which were included by relationship can not be added / removed manually from the primary key. If done such changes they will be ignored. To create primary key using columns included by relationship use the feature attributes, constraints and primary key on the relationship form.</source>
-        <translation>Поля, созданные связью, нельзя вручную удалять из первичного ключа. Такие изменения будут проигнорированы. Чтобы создать первичный ключ из полей,созданных связью, используйте атрибуты, ограничения и первичный ключ самой связи.   </translation>
+        <translation>Поля, созданные связью, нельзя удалять из первичного ключа вручную. Такие изменения будут проигнорированы. Чтобы создать первичный ключ из полей,созданных связью, используйте атрибуты, ограничения и первичный ключ самой связи.</translation>
     </message>
 </context>
 <context>
@@ -1066,7 +1066,7 @@ The complete text of GPLv3 is at LICENSE file on source code root directory. Als
     <message>
         <location filename="../libpgmodeler_ui/src/conversionwidget.cpp" line="17"/>
         <source>The function to be assigned to an encoding conversion must have the following signature: &lt;em&gt;void function(integer, integer, cstring, internal, integer)&lt;/em&gt;.</source>
-        <translation>Функция, выполняющая предобразование кодировки, должна быть объявлена следующим образом: &lt;em&gt;void function(integer, integer, cstring, internal, integer)&lt;/em&gt;.</translation>
+        <translation>Функция, выполняющая преобразование кодировки, должна быть объявлена следующим образом: &lt;em&gt;void function(integer, integer, cstring, internal, integer)&lt;/em&gt;.</translation>
     </message>
 </context>
 <context>
@@ -1084,7 +1084,7 @@ The complete text of GPLv3 is at LICENSE file on source code root directory. Als
     <message>
         <location filename="../crashhandler/ui/crashhandler.ui" line="128"/>
         <source>Create</source>
-        <translation>Создать отчёт об ошибке</translation>
+        <translation>Создать отчёт</translation>
     </message>
     <message>
         <location filename="../crashhandler/ui/crashhandler.ui" line="154"/>
@@ -1094,7 +1094,7 @@ The complete text of GPLv3 is at LICENSE file on source code root directory. Als
     <message>
         <location filename="../crashhandler/ui/crashhandler.ui" line="195"/>
         <source>We apologize for what happened! It is clear that a nasty bug caused it. Please fill out the form below describing your actions before pgModeler quit unexpectedly. This will help on bug extermination and improve the software.</source>
-        <translation>Мы приносим свои извенения. Очевидно, причиной аварии стала какая-то ошибка в программе. Пожалуйста, заполните расположенную ниже форму. Это поможет нам найти ошибку и сделать программу лучше.</translation>
+        <translation>Мы приносим свои извинения. Очевидно, причиной аварии стала какая-то ошибка в программе. Пожалуйста, заполните расположенную ниже форму. Это поможет нам найти ошибку и улучщить программу.</translation>
     </message>
     <message>
         <location filename="../crashhandler/ui/crashhandler.ui" line="224"/>
@@ -1104,7 +1104,7 @@ The complete text of GPLv3 is at LICENSE file on source code root directory. Als
     <message>
         <location filename="../crashhandler/ui/crashhandler.ui" line="233"/>
         <source>Actions made before the crash:</source>
-        <translation>Ваши действия перед аварийным завершением:</translation>
+        <translation>Опишите ваши действия перед аварийным завершением:</translation>
     </message>
     <message>
         <location filename="../crashhandler/ui/crashhandler.ui" line="248"/>
@@ -1164,7 +1164,7 @@ Size: %2 bytes
     <message>
         <location filename="../libpgmodeler/src/databasemodel.cpp" line="5341"/>
         <source>Generating %1 of the object: %2 (%3)</source>
-        <translation>Создаётся %1 объекта: %2 (%3)</translation>
+        <translation>Создаётся %1, объект: %2 (%3)</translation>
     </message>
 </context>
 <context>
@@ -1259,7 +1259,7 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="8"/>
         <source>Zero length assignment!</source>
-        <translation>Присвоение нулевой длины!</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="9"/>
@@ -1269,7 +1269,7 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="10"/>
         <source>Assignment of an invalid precision to type time, timestamp or interval. The precision in this case must be equal to or less than 6!</source>
-        <translation>Присвоение приёмнику типа time, timestamp или interval значения с недопустимой точностью. В данном случае точность должна быть меньше или равна 6-ти!</translation>
+        <translation>Присвоение типу time, timestamp или interval значения с недопустимой точностью. В данном случае точность должна быть меньше или равна 6!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="11"/>
@@ -1279,17 +1279,17 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="12"/>
         <source>Reference to a column which index is out of the capacity of the column list!</source>
-        <translation>Ссылка на поле, индекс которой выходит за границы вместимости списка полей!</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="13"/>
         <source>Assignment of not allocated object!</source>
-        <translation>Присвоение неразмещённого объекта!</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="14"/>
         <source>Assignment of a not allocated schema to object &apos;%1&apos; (%2)!</source>
-        <translation>Присвоение неразмещённой схемы объекту &apos;%1&apos; (%2)!</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="15"/>
@@ -1309,17 +1309,17 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="18"/>
         <source>Assigning object of an invalid type!</source>
-        <translation>Присвоение объекта недопустимого типа!</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="19"/>
         <source>Removing an object of an invalid type!</source>
-        <translation>Удаление объекта недопустимого типа!</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="20"/>
         <source>Obtaining an object of an invalid type!</source>
-        <translation>Получение объекта недопустимого типа!</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="21"/>
@@ -1329,7 +1329,7 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="22"/>
         <source>The insertion of the parameter &apos;%1&apos; will not be possible because there is another parameter with same name in the function &apos;%2&apos;!</source>
-        <translation></translation>
+        <translation>Вставка параметра &apos;%1&apos; невозможна так как у функции &apos;%2&apos; уже имеется другой параметр с тем же именем! </translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="23"/>
@@ -1339,17 +1339,17 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="24"/>
         <source>Reference to a parameter which index is out of the parameter list bounds!</source>
-        <translation></translation>
+        <translation>Ссылка на параметр, индекс которого вне границ списка параметров!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="25"/>
         <source>Reference to an event which does not belongs to trigger!</source>
-        <translation></translation>
+        <translation>Ссылка на событие, которое не принадлежит триггеру!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="26"/>
         <source>The column &apos;%1&apos; can&apos;t be assigned to the trigger &apos;%2&apos; because does not belongs to the trigger&apos;s parent table!</source>
-        <translation></translation>
+        <translation>Поле &apos;%1&apos; не может быть назначено триггеру &apos;%2&apos; так как оно не принадлежит родительской таблице триггера!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="27"/>
@@ -1379,12 +1379,12 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="32"/>
         <source>Reference to an argument which index is out of argument list bounds!</source>
-        <translation></translation>
+        <translation>Ссылка на аргумент, индекс которого вне границ списка аргументов!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="33"/>
         <source>Insertion of a column which name is already registered to another column of the object!</source>
-        <translation></translation>
+        <translation>Вставка поля, имя которого уже присвоено другому полю объекта!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="34"/>
@@ -1429,17 +1429,17 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="42"/>
         <source>Reference to a function with invalid type!</source>
-        <translation></translation>
+        <translation>Ссылка на функцию с неправильным типом!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="43"/>
         <source>Reference to an argument of the operator with invalid type!</source>
-        <translation></translation>
+        <translation>Ссылка на аргумент оператора с неправильным типом!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="44"/>
         <source>Reference to an operator with invalid type!</source>
-        <translation></translation>
+        <translation>Ссылка на оператор неправильного типа!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="45"/>
@@ -1449,257 +1449,257 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="46"/>
         <source>Reference to an invalid role type!</source>
-        <translation></translation>
+        <translation>Ссылка на неправильный тип роли!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="47"/>
         <source>The insertion of the role &apos;%1&apos; is not possible because this is already being referenced by role &apos;%2&apos;!</source>
-        <translation></translation>
+        <translation>Невозможно вставить роль &apos;%1&apos; потому, что на неё уже ссылается роль &apos;%2&apos;!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="48"/>
         <source>Reference redundancy detected by having the role &apos;%1&apos; referencing the role &apos;%2&apos;!</source>
-        <translation></translation>
+        <translation>Обнаружена избыточность: роль &apos;%1&apos; ссылается на роль &apos;%2&apos;!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="49"/>
         <source>The role &apos;%1&apos; can not be listed as a member of itself!</source>
-        <translation></translation>
+        <translation>Роль &apos;%1&apos; не может быть членом самой себя!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="50"/>
         <source>Reference to a role which index is out of role list bounds!</source>
-        <translation></translation>
+        <translation>Ссылка на роль, индекс которой вне границ списка ролей!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="51"/>
         <source>Insertion of empty command to the rule!</source>
-        <translation></translation>
+        <translation>Вставка пустой команды в правило! </translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="52"/>
         <source>Reference to a command which index is out of the command list bounds!</source>
-        <translation></translation>
+        <translation>Ссылка на команду, индекс которой вне границ списка полей!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="53"/>
         <source>Is not possible to create a self generalization/copy relationship! The table can not inherit or copy their own attributes!</source>
-        <translation></translation>
+        <translation>Невозможно создать обобщающую или копирующую связь с замыканием на себя! Таблица не может наследовать или копировать свои собственные атрибуты!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="54"/>
         <source>Assignment of an object that already belongs to another table!</source>
-        <translation></translation>
+        <translation>Попытка присвоения объекта, который уже принадлежит другой таблице!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="55"/>
         <source>Assignment of a schema to the sequence which differs from the schema of the owner table!</source>
-        <translation></translation>
+        <translation>Попытка присвоить последовательности схему, отличаеющейся от схемы, которой принадлежит таблица-владелец! </translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="56"/>
         <source>Assignment of an invalid value to one of the sequence attributes!</source>
-        <translation></translation>
+        <translation>Попытка присвоения недопустимого значения одному из атрибутов последовательности!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="57"/>
         <source>Assignment of a minimum value to the sequence which is greater than the maximum value!</source>
-        <translation></translation>
+        <translation>Попытка задать для последовательности минимальное значение, которое превышает максимальное! </translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="58"/>
         <source>Assignment of a start value to the sequence which is extrapolating the range defined by minimum and maximum values!</source>
-        <translation></translation>
+        <translation>Попытка задать для последовательности начальное значение, которое выходит за границы, определённые минимальным и максимальным значениями!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="59"/>
         <source>Assignment of a null increment value to the sequence!</source>
-        <translation></translation>
+        <translation>Попытка задать для последовательности нулевое приращение! </translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="60"/>
         <source>Assignment of null cache value to the sequence!</source>
-        <translation></translation>
+        <translation>Попытка задать для последовательности нулевое значение запаса!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="61"/>
         <source>Assignment of owner table which is not in the same schema as the sequence &apos;%1&apos;!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="62"/>
         <source>Assignment of owner table which does not belong to the same owner of the sequence &apos;%1&apos;!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="63"/>
         <source>Assignment of a nonexistent owner column to the sequence &apos;%1&apos;!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="64"/>
         <source>Assignment of an owner column to the sequence &apos;%1&apos; that is not related to any table!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="65"/>
         <source>Reference to a label which index is out of labels list bounds!</source>
-        <translation></translation>
+        <translation>Ссылка на метку, индекс которой вне границ списка меток!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="66"/>
         <source>Allocation of object with invalid type!</source>
-        <translation></translation>
+        <translation>Размещение объекта недопустимого типа!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="67"/>
         <source>Assignment of a function with invalid return type to object &apos;%1&apos; (%2)!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="68"/>
         <source>Assignment of a function with invalid parameter(s) type(s) to object &apos;%1&apos; (%2)!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="69"/>
         <source>Assignment of not allocated language!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="70"/>
         <source>Assignment of language object which type is invalid!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="71"/>
         <source>Reference to data type with an index outside the capacity of data types list!</source>
-        <translation></translation>
+        <translation>Ссылка на тип данных с индексом, выходящим за пределы вместимости списка типов данных!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="72"/>
         <source>Assignment of a null type to to object &apos;%1&apos; (%2)!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="73"/>
         <source>Assignment of invalid type to the object!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="74"/>
         <source>Assignment of an empty directory to object &apos;%1&apos; (%2)!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="75"/>
         <source>Obtaining types with invalid quantity!</source>
-        <translation></translation>
+        <translation>Получены типы с неверным размером!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="76"/>
         <source>Insertion of item which already exists in the attributes list of the type!</source>
-        <translation></translation>
+        <translation>Вставка элемента, который уже есть в списке атрибутов типа!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="77"/>
         <source>Insertion of invalid item in the attributes list of the type!</source>
-        <translation></translation>
+        <translation>Вставка недопустимого элемента в список атрибутов типа!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="78"/>
         <source>Insertion of item which already exists in the enumarations list of the type!</source>
-        <translation></translation>
+        <translation>Вставка элемента, который уже есть в списке перечислений типа!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="79"/>
         <source>Insertion of invalid item in the enumerations list of the type!</source>
-        <translation></translation>
+        <translation>Вставка недопустимого элемента в список перечислений типа!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="80"/>
         <source>Reference to an attribute which index is out of the attributes list bounds!</source>
-        <translation></translation>
+        <translation>Ссылка на атрибут, индекс которого вне границ списка атрибутов!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="81"/>
         <source>Reference to an enumeration which index is out of the enumerations list bounds!</source>
-        <translation></translation>
+        <translation>Ссылка на перечисление, индекс которого вне границ списка перечислений!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="82"/>
         <source>Assignment of invalid configuration to the type!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="83"/>
         <source>The data type &apos;%1&apos; can not be assigned because it already exists in the types list of the aggregate function &apos;%2&apos;!</source>
-        <translation></translation>
+        <translation>Тип данных &apos;%1&apos; не может быть назначен, так как он уже имеется в списке типов агрегатной функции &apos;%2&apos;!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="84"/>
         <source>Assignment of an operator which input type count is invalid to aggregate function!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="85"/>
         <source>Assignment of an operator which types of arguments is invalid!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="86"/>
         <source>Assignment of system reserved name to the object &apos;%1&apos; (%2)!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="87"/>
         <source>One function with invalid configuration is been used by the object &apos;%1&apos; (%2)!</source>
-        <translation></translation>
+        <translation>Объект &apos;%1&apos; (%2) использует функцию с неправильными настройками!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="88"/>
         <source>Assignment of invalid id to the user!</source>
-        <translation></translation>
+        <translation>Попытка присвоения пользователю неправильного идентификатора!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="89"/>
         <source>Assignment of an invalid strategy/support number to an operator class element!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="90"/>
         <source>Insertion of element which already exists in the element list!</source>
-        <translation></translation>
+        <translation>Попытка вставки элемента, который уже есть в списке элементов!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="91"/>
         <source>Reference to an element which index is out of element list bounds!</source>
-        <translation></translation>
+        <translation>Ссылка на элемент, индекс которого вне границ списка элементов!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="92"/>
         <source>Reference to an object which index is out of object list bounds!</source>
-        <translation></translation>
+        <translation>Ссылка на объект, индекс котрого вне границ списка объектов!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="93"/>
         <source>Removal of an object not allocated!</source>
-        <translation></translation>
+        <translation>Удаление несуществующего объекта!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="94"/>
         <source>The object &apos;%1&apos; (%2) can not be removed because it is being referenced by object &apos;%3&apos; (%4)!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="95"/>
         <source>The object &apos;%1&apos; (%2) can not be removed because it is being referenced by object &apos;%3&apos; (%4) that belongs to &apos;%5&apos; (%6)!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="96"/>
         <source>Operation with object(s) which type(s) is invalid!</source>
-        <translation></translation>
+        <translation>Действие над объектами недопустимого типа!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="97"/>
@@ -1709,17 +1709,17 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="98"/>
         <source>Operation with object not allocated!</source>
-        <translation></translation>
+        <translation>Действие над несуществующим объектом!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="99"/>
         <source>The creation of the relationship &apos;%1&apos; between the table &apos;%2&apos; and &apos;%3&apos; can not be done because one does not have a primary key. If the relationship is of the type n-n both tables must have primary keys!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="100"/>
         <source>The relationship of the type 1-1 where both tables are mandatory participation is not implemented because it requires fusion between the tables that breaks the modeling done by the user!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="101"/>
@@ -1734,82 +1734,82 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="103"/>
         <source>Identifier relationship can not be created for a self relationship, relationships of the type n-n, copy or generalization!</source>
-        <translation></translation>
+        <translation>Связь-идентификатор не может быть создана для рекурсивной однотабличной связи, связи типа n-n, копирующей или обобщающей связи!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="104"/>
         <source>Unable to create a copy relationship because the column &apos;%1&apos; in table &apos;%2&apos; already exists in table &apos;%3&apos;!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="105"/>
         <source>Unable to create the generalization relationship because the column &apos;%1&apos; in table &apos;%2&apos; can not be merged with the column &apos;%3&apos; of table &apos;%4&apos; because they have incompatible types!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="106"/>
         <source>An attribute can not be added to a copy or generalization relationship!</source>
-        <translation></translation>
+        <translation>Атрибут не может быть добавлен в копирующую или обобщающую связь!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="107"/>
         <source>A foreign key can not be added to a relationship because is created automatically when this is connected!</source>
-        <translation></translation>
+        <translation>Внешний ключ не может быть добавлен к связи потому, что он был создан автоматически!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="108"/>
         <source>The object &apos;%1&apos; (%2) is referencing the object &apos;%3&apos; (%4) which was not found in the list of objects of the same type in the model!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="109"/>
         <source>Reference to an user-defined data type that not exists in the model!</source>
-        <translation></translation>
+        <translation>Ссылка на пользовательский тип данных, который не определён в модели! </translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="110"/>
         <source>Assignment of invalid maximum size to operation list!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="111"/>
         <source>Unable to write the file %1! Make sure the directory exists, or if the user has access permissions on it!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="112"/>
         <source>Unable to write the model in the file %1 due to one or more errors in the definition generation process!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="113"/>
         <source>There is already a relationship between &apos;%1&apos; (%2) and &apos;%3&apos; (%4) in the model!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="114"/>
         <source>The configuration of the relationship &apos;%1&apos; generates a redundancy between the relationships &apos;%2&apos;. Redundancy on identifier or generalization/copy relationships are not accepted since they result in  incorrect column spreading making the model inconsistent!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="115"/>
         <source>One or more objects were invalidated and automatically removed because they were referencing table columns which were included through relationships and which no longer exists due to disconnection of relationships or exclusion of such generated columns!</source>
-        <translation></translation>
+        <translation>Один или более объектов стали недействительными и были автоматически удалены потому, что они ссылались на поля, которые были созданы связями и которые больше не существуют из-за разрыва связей или удаления таких полей! </translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="116"/>
         <source>The primary key &apos;%1&apos; can only be allocated if declared within a block of code that defines a table or relationship!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="117"/>
         <source>Reference to an invalid privilege type!</source>
-        <translation></translation>
+        <translation>Ссылка на неправильный тип привелегий!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="118"/>
         <source>Insertion of a role which already exists in the role list of the permission!</source>
-        <translation></translation>
+        <translation>Вставка роли, которая уже есть в списке ролей разрешения! </translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="119"/>
@@ -1819,52 +1819,52 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="120"/>
         <source>There is already a permission on object &apos;%1&apos; (%2) which has one or more equal roles from those present on permission to be assigned to the object!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="121"/>
         <source>A permission is referencing the object &apos;%1&apos; (%2) which was not found in the model!</source>
-        <translation></translation>
+        <translation>Разрешение ссылается на объект &apos;%1&apos; (%2), который не найден в модели!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="122"/>
         <source>The object &apos;%1&apos; (%2) can not be created because its not being assigned to any schema!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="123"/>
         <source>The tablespace &apos;%1&apos; can not be inserted into the model because it points to the same directory as the tablespace &apos;%2&apos;!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="124"/>
         <source>It is not possible to create arrays of domains or sequences (dimension &gt;= 1)! PostgreSQL does not yet implement this feature!</source>
-        <translation></translation>
+        <translation>Недопустимо создавать массивы доменов или последовательностей (размерность &gt;= 1)! Такая возможность ещё не реализована в PostgreSQL!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="125"/>
         <source>The function &apos;%1&apos; can not get a source code as a definition because its language is set to C. Use the attributes symbol and dynamic library instead!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="126"/>
         <source>The function &apos;%1&apos; can have the attributes symbol and dynamic library configured only if the language is set to C. For all other cases you must specify a source code that defines it in the DBMS!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="127"/>
         <source>The operator &apos;%1&apos; can not be assigned as a comutator of operator &apos;%2&apos; because it has incompatible settings!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="128"/>
         <source>The operator &apos;%1&apos; can not be assigned as negator of operator &apos;%2&apos; because it has incompatible settings!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="129"/>
         <source>The type &apos;%1&apos; can not self refer in the attributes &apos;element&apos; or &apos;copy type&apos; or be used as a data type of an attribute in the configuration of a composite type!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="130"/>
@@ -1884,7 +1884,7 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="133"/>
         <source>The relationship &apos;%1&apos; can not make use of the special primary key. Only generalization/copy relationships have access to this resource!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="134"/>
@@ -1894,82 +1894,82 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="135"/>
         <source>The object &apos;%1&apos; (%2) can not be edited or deleted because it was automatically included through a relationship! To manipulate the object is necessary to make it from the edit form of the relationship that holds it.</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="136"/>
         <source>The object &apos;%1&apos; (%2) can not be deleted because it is protected!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="137"/>
         <source>The group &apos;%1&apos; has already been declared earlier!</source>
-        <translation></translation>
+        <translation>Группа &apos;%1&apos; ранее уже была объявлена! </translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="138"/>
         <source>The group &apos;%1&apos; can not be built in the groups declaration block (&apos;%2&apos;)!</source>
-        <translation></translation>
+        <translation>Группа &apos;%1&apos; не может быть создана в блоке объявления групп (&apos;%2&apos;)!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="139"/>
         <source>The group &apos;%1&apos; was built but not declared in the groups declaration block (&apos;%2&apos;)!</source>
-        <translation></translation>
+        <translation>Группа &apos;%1&apos; была определена, но не объявлена в блоке объявления групп (&apos;%2&apos;)!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="140"/>
         <source>The group &apos;%1&apos; can not be built without possessing child elements!</source>
-        <translation></translation>
+        <translation>Группа &apos;%1&apos; не может быть создана без обработки дочерних элементов!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="141"/>
         <source>The group &apos;%1&apos; can not be built once more because this was done in previous blocks!</source>
-        <translation></translation>
+        <translation>Группа &apos;%1&apos; не может быть создана повторно, так как это уже было сделано в предыдущих блоках!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="142"/>
         <source>The group &apos;%1&apos; has been declared but not built!</source>
-        <translation></translation>
+        <translation>Группа &apos;%1&apos; была объявлена, но не определена!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="143"/>
         <source>Reference to a column of the objects table with invalid index!</source>
-        <translation></translation>
+        <translation>Ссыла на поле таблицы объектов с неправильным индексом!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="144"/>
         <source>Reference to a row of the objects table with invalid index!</source>
-        <translation></translation>
+        <translation>Ссылка на запись таблицы объектов с неверным индексом!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="145"/>
         <source>The schema public and the languages plpgsql, c and sql can not be manipulated because they are reserved to PostgreSQL! They are present in the model database only as a reference!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="146"/>
         <source>The new configuration function invalidates the object &apos;%1&apos; (%2)! In this case it is needed to undo the relationship between the affected object and function so that the new configuration of the latter to take effect!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="147"/>
         <source>A vision reference must have at least one SQL scope: SELECT, FROM, FROM-WHERE or After WHERE!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="148"/>
         <source>Constraints like primary key, foreign key or unique must have at least one column related to them! For foreign keys must be selected, in addition, the referenced columns!</source>
-        <translation></translation>
+        <translation>Ограничения типа первичный ключ, внешний ключ или уникальный индекс должны быть связаны хотябы с одним полем! Для внешнего ключа следует также указать поля внешней таблицы!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="149"/>
         <source>Unable to load one or more configuration files! Please check if files exists in the configuration folder and if they are not corrupted to preventing this error to occur again on the next startup!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="150"/>
         <source>Could not find the default settings file &apos;%1&apos;! To restore default settings check the existence of the file and try again!</source>
-        <translation></translation>
+        <translation>Невозможно найти файл настроек по умолчанию &apos;%1&apos;! Чтобы восстановить настройки по умолчанию убедитель в существовании файла и попробуйте снова!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="151"/>
@@ -1978,7 +1978,11 @@ Size: %2 bytes
 ** Executed SQL command: **
 
 %1</source>
-        <translation></translation>
+        <translation>Экспорт был прерван ошибкой, возникшей при попытке сервера PostgreSQL выполнить команду SQL. Подробности ошибки в стеке исключений!
+
+** Команда SQL, вызвавшая ошибку: **
+
+%1</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="152"/>
@@ -1988,32 +1992,32 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="153"/>
         <source>One or more plugins were not activated due to errors during the loading process! Check the exception stack for more details.</source>
-        <translation></translation>
+        <translation>Одно или более дополнений не были активированы из-за ошибок, возникших при загрузке! Подробности в стеке исключений.</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="154"/>
         <source>Invalid syntax in file %1, line %2, column %3!</source>
-        <translation></translation>
+        <translation>Синтаксическая ошибка в файле %1, строка %2, колонка %3!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="155"/>
         <source>Invalid conditional instruction &apos;%1&apos; on file %2, line %3, column %4!</source>
-        <translation></translation>
+        <translation>Неверная условная инструкция &apos;%1&apos; в файле %2, строка %3, колонка %4!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="156"/>
         <source>Unknown attribute &apos;%1&apos; in file %2, line %3, column %4!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="157"/>
         <source>Invalid metacharacter &apos;%1&apos; in file %2, line %3, column %4!</source>
-        <translation></translation>
+        <translation>Недопустимый метасимвол &apos;%1&apos; в файле %2, строка %3, колонка %4!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="158"/>
         <source>Attribute &apos;%1&apos; with an undefined value in file %2, line %3, column %4!</source>
-        <translation></translation>
+        <translation>Атрибут &apos;%1&apos; с неопределённым значением в файле %2, строка %3, колонка %4!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="159"/>
@@ -2023,7 +2027,7 @@ Size: %2 bytes
     <message>
         <location filename="../libutil/src/exception.cpp" line="160"/>
         <source>Could not access the file or directory %1! Make sure that it exists or if the user has access permissions on it!</source>
-        <translation></translation>
+        <translation>Невозможно получить доступ к файлу или папке %1! Убедитель в том, что они существуют, а у пользователя достаточно прав доступа!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="161"/>
@@ -2039,27 +2043,28 @@ Size: %2 bytes
         <location filename="../libutil/src/exception.cpp" line="163"/>
         <source>Error while interpreting XML buffer at line %1 column %2.
 Message generated by the parser: &apos;%3&apos;. %4</source>
-        <translation></translation>
+        <translation>Ошибка во время интерпретации буфера XML в строке %1, колонка %2.
+Парсер вернул следующее сообщение: &apos;%3&apos;. %4</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="164"/>
         <source>Operation on unallocated element tree! It is necessary to load the XML parser buffer and interpret it so that the tree is generated!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="165"/>
         <source>Could not load file %1. The same appears to be inconsistent or one of its dependencies (DTD files) has errors or is missing!</source>
-        <translation></translation>
+        <translation>Невозможно загрузить файл %1. Похоже, что он имеет неправильный формат или одна из его зависимостей (DTD-файлы! содержит ошибки или не существует!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="166"/>
         <source>Operation with unallocated tree element!</source>
-        <translation></translation>
+        <translation>Действие над несуществующим элементом дерева!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="167"/>
         <source>Operation with element which does not exists in the element tree currently loaded!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="168"/>
@@ -2069,18 +2074,19 @@ Message generated by the parser: &apos;%3&apos;. %4</source>
     <message>
         <location filename="../libutil/src/exception.cpp" line="169"/>
         <source>Operation on connection not established!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="170"/>
         <source>Attempt to connect without define configuration parameters!</source>
-        <translation></translation>
+        <translation>Попытка соединения с пустыми параметрами!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="171"/>
         <source>Could not connect to the database.
 Message returned: &apos;%1&apos;</source>
-        <translation></translation>
+        <translation>Невозможно подключиться к базе данных.
+Получено следующее сообщение: &apos;%1&apos;</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="172"/>
@@ -2090,39 +2096,40 @@ Message returned: &apos;%1&apos;</source>
     <message>
         <location filename="../libutil/src/exception.cpp" line="173"/>
         <source>Unable to allocate the result of the SQL command because the response from the DBMS was not understood by the client!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="174"/>
         <source>Unable to allocate command result for the SQL because the server has generated a fatal error!
 Message returned by the DBMS: %1</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="175"/>
         <source>Unable to allocate the result of the SQL command because the command passed was an empty SQL!</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="176"/>
         <source>Reference to a column of tuple with invalid index!</source>
-        <translation></translation>
+        <translation>Ссылка на поле тупля с неправильным индексом!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="177"/>
         <source>Reference to a column of tuple with invalid name!</source>
-        <translation></translation>
+        <translation>Ссылка на поле тупля с неправильным имененем!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="178"/>
         <source>Reference to a tuple with index invalid or the result is empty (no tuples)!</source>
-        <translation></translation>
+        <translation>Ссылка на кортеж с неправильным индексом или пустым результатом (нет кортежей)!</translation>
     </message>
     <message>
         <location filename="../libutil/src/exception.cpp" line="179"/>
         <source>Could not execute the SQL command.
  Message returned: %1</source>
-        <translation></translation>
+        <translation>Невозможно выполнить команду SQL.
+Получено следующее сообщение: %1</translation>
     </message>
 </context>
 <context>
@@ -2484,7 +2491,7 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/ui/generalconfigwidget.ui" line="428"/>
         <source>Print grid</source>
-        <translation>Пачатать сетку</translation>
+        <translation>Сетка</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/generalconfigwidget.ui" line="440"/>
@@ -2539,7 +2546,7 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/ui/generalconfigwidget.ui" line="593"/>
         <source>Print page numbers</source>
-        <translation>Печатать номера страниц</translation>
+        <translation>Номера страниц</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/generalconfigwidget.ui" line="645"/>
@@ -3067,7 +3074,7 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/ui/messagebox.ui" line="96"/>
         <source>Show excpetion stack in text format (useful to report errors).</source>
-        <translation>Показать стек исключения в текстовом формате (полезно для отчёта об ошибке).</translation>
+        <translation>Показать стек исключений в текстовом формате (полезно при отправке отчётов об ошибках).</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/messagebox.ui" line="125"/>
@@ -3431,7 +3438,7 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/ui/modelrestorationform.ui" line="223"/>
         <source>pgModeler was not closed properly in a previous execution and some models were still being edited. Click &apos;Restore&apos; to reopen the models or &apos;Cancel&apos; to abort the restoration.</source>
-        <translation>Ранее программа была аварийно закрыта во время, как некоторые модели редактировались. Нажмите &quot;Восстановить&quot; чтобы открыть их, или &quot;Отмена&quot; чтобы прервать восстановление.</translation>
+        <translation>Ранее программа была аварийно закрыта когда некоторые модели всё ещё редактировались. Нажмите &quot;Восстановить&quot; чтобы открыть их, или &quot;Отмена&quot; чтобы прервать восстановление.</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/src/modelrestorationform.cpp" line="31"/>
@@ -3441,7 +3448,6 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/src/modelrestorationform.cpp" line="31"/>
         <source>yyyy-MM-dd hh:mm:ss</source>
-        <translatorcomment>Probably, this string should never be translated.</translatorcomment>
         <translation></translation>
     </message>
 </context>
@@ -3664,7 +3670,7 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/src/modelwidget.cpp" line="1565"/>
         <source>Also copy all dependencies of selected objects? This minimizes the breakdown of references when copied objects are pasted into another model.</source>
-        <translation>Нужно ли копировать и все зависимости выбранных объектов? Это минимизирует нарушение связей при вставке скопированных объектов в другую модель.</translation>
+        <translation>Нужно ли скопировать все зависимости выбранных объектов? Это минимизирует нарушение связей при вставке скопированных объектов в другую модель.</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/src/modelwidget.cpp" line="1659"/>
@@ -3769,7 +3775,7 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/ui/objectselectorwidget.ui" line="92"/>
         <source>Clear field</source>
-        <translation>Очистить поле</translation>
+        <translation>Очистить</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/objectselectorwidget.ui" line="124"/>
@@ -3935,7 +3941,7 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/ui/operationlistwidget.ui" line="193"/>
         <source>Delete operation history</source>
-        <translation>Удалить историю дейстивий</translation>
+        <translation>Очистить историю дейстивий</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/operationlistwidget.ui" line="219"/>
@@ -3980,27 +3986,27 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/src/operationlistwidget.cpp" line="111"/>
         <source>Operation: %1</source>
-        <translation>Операция: %1</translation>
+        <translation>Действие: %1</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/src/operationlistwidget.cpp" line="135"/>
         <source>Undoing operations...</source>
-        <translation>Отменяются операции...</translation>
+        <translation>Действия отменяются...</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/src/operationlistwidget.cpp" line="160"/>
         <source>Redoing operations...</source>
-        <translation>Повтор операций...</translation>
+        <translation>Повтор действий...</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/src/operationlistwidget.cpp" line="184"/>
         <source>Operation history exclusion</source>
-        <translation>Удаление истории операций</translation>
+        <translation>Удаление истории действий</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/src/operationlistwidget.cpp" line="185"/>
         <source>Delete the executed operations history is an irreversible action, do you want to continue?</source>
-        <translation>Удаление истории выполненых операций является необратимым действием. Вы хотите продолжить?</translation>
+        <translation>Очистка истории действий необратима. Вы хотите продолжить?</translation>
     </message>
 </context>
 <context>
@@ -4223,7 +4229,7 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/ui/parameterwidget.ui" line="44"/>
         <source>Default Value:</source>
-        <translation>Значение по умолчанию:</translation>
+        <translation>По умолчанию:</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/parameterwidget.ui" line="73"/>
@@ -4277,7 +4283,7 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/ui/permissionwidget.ui" line="217"/>
         <source>Cancel Operation</source>
-        <translation>Отменить операцию</translation>
+        <translation>Отменить действие</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/permissionwidget.ui" line="270"/>
@@ -4922,17 +4928,17 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/ui/rulewidget.ui" line="219"/>
         <source>SQL Command:</source>
-        <translation>SQL-команда:</translation>
+        <translation>Команда SQL:</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/src/rulewidget.cpp" line="25"/>
         <source>SQL command</source>
-        <translation>SQL-команда</translation>
+        <translation>Команда SQL</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/src/rulewidget.cpp" line="29"/>
         <source>To create a rule that does not perform any action (&lt;strong&gt;DO NOTHING&lt;/strong&gt;) simply do not specify commands in the SQL commands table.</source>
-        <translation>Чтобы создать правило, которе не выполняет ни каких нействий (&lt;strong&gt;DO NOTHING&lt;/strong&gt;), просто оставьте таблицу SQL-команд пустой.</translation>
+        <translation>Чтобы создать правило, которе не выполняет ни каких действий (&lt;strong&gt;DO NOTHING&lt;/strong&gt;), просто оставьте поле команды SQL пустым.</translation>
     </message>
 </context>
 <context>
