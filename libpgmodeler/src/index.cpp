@@ -1,3 +1,21 @@
+/*
+# PostgreSQL Database Modeler (pgModeler)
+#
+# Copyright 2006-2013 - Raphael Araújo e Silva <rkhaotix@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# The complete text of GPLv3 is at LICENSE file on source code root directory.
+# Also, you can get the complete GNU General Public License at <http://www.gnu.org/licenses/>
+*/
+
 #include "index.h"
 
 Index::Index(void)
@@ -20,6 +38,7 @@ Index::Index(void)
 	attributes[ParsersAttributes::DECL_IN_TABLE]="";
 	attributes[ParsersAttributes::ELEMENTS]="";
 	attributes[ParsersAttributes::FAST_UPDATE]="";
+	attributes[ParsersAttributes::STORAGE_PARAMS]="";
 }
 
 void Index::setElementsAttribute(unsigned def_type)
@@ -78,7 +97,21 @@ int Index::isElementExists(const QString &expr)
 	return(idx);
 }
 
-void Index::addElement(const QString &expr, OperatorClass *op_class, bool asc_order, bool nulls_first)
+void Index::addElement(IndexElement elem)
+{
+	if(elem.getColumn())
+	{
+		this->addElement(elem.getColumn(), elem.getOperatorClass(), elem.isSortingEnabled(),
+										 elem.getSortingAttribute(IndexElement::ASC_ORDER),elem.getSortingAttribute(IndexElement::NULLS_FIRST));
+	}
+	else
+	{
+		this->addElement(elem.getExpression(), elem.getOperatorClass(), elem.isSortingEnabled(),
+										 elem.getSortingAttribute(IndexElement::ASC_ORDER),elem.getSortingAttribute(IndexElement::NULLS_FIRST));
+	}
+}
+
+void Index::addElement(const QString &expr, OperatorClass *op_class, bool use_sorting, bool asc_order, bool nulls_first)
 {
 	//Raises an error if the expression is empty
 	if(expr.isEmpty())
@@ -96,14 +129,15 @@ void Index::addElement(const QString &expr, OperatorClass *op_class, bool asc_or
 		//Configures the element
 		elem.setExpression(expr);
 		elem.setOperatorClass(op_class);
-		elem.setSortAttribute(IndexElement::NULLS_FIRST, nulls_first);
-		elem.setSortAttribute(IndexElement::ASC_ORDER, asc_order);
+		elem.setSortingEnabled(use_sorting);
+		elem.setSortingAttribute(IndexElement::NULLS_FIRST, nulls_first);
+		elem.setSortingAttribute(IndexElement::ASC_ORDER, asc_order);
 
 		elements.push_back(elem);
 	}
 }
 
-void Index::addElement(Column *column, OperatorClass *op_class, bool asc_order, bool nulls_first)
+void Index::addElement(Column *column, OperatorClass *op_class, bool use_sorting, bool asc_order, bool nulls_first)
 {
 	//Case the column is not allocated raises an error
 	if(!column)
@@ -124,8 +158,9 @@ void Index::addElement(Column *column, OperatorClass *op_class, bool asc_order, 
 		//Configures the element
 		elem.setColumn(column);
 		elem.setOperatorClass(op_class);
-		elem.setSortAttribute(IndexElement::NULLS_FIRST, nulls_first);
-		elem.setSortAttribute(IndexElement::ASC_ORDER, asc_order);
+		elem.setSortingEnabled(use_sorting);
+		elem.setSortingAttribute(IndexElement::NULLS_FIRST, nulls_first);
+		elem.setSortingAttribute(IndexElement::ASC_ORDER, asc_order);
 
 		elements.push_back(elem);
 	}
@@ -230,14 +265,23 @@ QString Index::getCodeDefinition(unsigned tipo_def)
 	setElementsAttribute(tipo_def);
 	attributes[ParsersAttributes::UNIQUE]=(index_attribs[UNIQUE] ? "1" : "");
 	attributes[ParsersAttributes::CONCURRENT]=(index_attribs[CONCURRENT] ? "1" : "");
-	attributes[ParsersAttributes::FAST_UPDATE]=(index_attribs[FAST_UPDATE] ? "1" : "");
 	attributes[ParsersAttributes::INDEX_TYPE]=(~indexing_type);
 	attributes[ParsersAttributes::CONDITION]=conditional_expr;
+	attributes[ParsersAttributes::STORAGE_PARAMS]="";
 
 	if(this->parent_table)
 		attributes[ParsersAttributes::TABLE]=this->parent_table->getName(true);
 
-	attributes[ParsersAttributes::FACTOR]=QString("%1").arg(fill_factor);
+	if(this->indexing_type==IndexingType::gin)
+		attributes[ParsersAttributes::STORAGE_PARAMS]=attributes[ParsersAttributes::FAST_UPDATE]=(index_attribs[FAST_UPDATE] ? "1" : "");
+
+	if(this->indexing_type==IndexingType::btree && fill_factor >= 10)
+	{
+		attributes[ParsersAttributes::FACTOR]=QString("%1").arg(fill_factor);
+		attributes[ParsersAttributes::STORAGE_PARAMS]="1";
+	}
+	else if(tipo_def==SchemaParser::XML_DEFINITION)
+		attributes[ParsersAttributes::FACTOR]="0";
 
 	/* Case the index doesn't referece some column added by relationship it will be declared
 		inside the parent table construction by the use of 'decl-in-table' schema attribute */

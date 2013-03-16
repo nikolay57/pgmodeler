@@ -1,6 +1,6 @@
 # XML definition for indexes
-# CAUTION: Do not modify this file unless you know what
-#          you are doing.
+# CAUTION: Do not modify this file unless you know what you are doing.
+#          Code generation can be broken if incorrect changes are made.
 
 %if @{decl-in-table} %then $tb %end
 [<index name=] "@{name}"
@@ -35,7 +35,7 @@
  @{elements}
 
  %if @{condition} %then
-   $tb <condition> @{condition} </condition> $br
+   $tb <condition> <! $ob CDATA $ob @{condition} $cb $cb > </condition> $br
  %end
  
 %if @{decl-in-table} %then $tb %end

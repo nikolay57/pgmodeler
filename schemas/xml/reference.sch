@@ -1,6 +1,6 @@
 # XML definition for view references
-# CAUTION: Do not modify this file unless you know what
-#          you are doing.
+# CAUTION: Do not modify this file unless you know what you are doing.
+#          Code generation can be broken if incorrect changes are made.
 $tb <reference
 
 
@@ -19,7 +19,7 @@ $tb <reference
 
 %if @{expression} %then
  > $br
- $tb $tb <expression> @{expression} </expression> $br
+ $tb $tb <expression> <! $ob CDATA $ob @{expression} $cb $cb > </expression> $br
 $tb </reference> $br
 %else
  /> $br

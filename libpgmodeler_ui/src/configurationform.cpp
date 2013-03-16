@@ -1,3 +1,21 @@
+/*
+# PostgreSQL Database Modeler (pgModeler)
+#
+# Copyright 2006-2013 - Raphael Araújo e Silva <rkhaotix@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# The complete text of GPLv3 is at LICENSE file on source code root directory.
+# Also, you can get the complete GNU General Public License at <http://www.gnu.org/licenses/>
+*/
+
 #include "configurationform.h"
 
 ConfigurationForm::ConfigurationForm(QWidget *parent, Qt::WindowFlags f) : QDialog(parent, f)
@@ -92,15 +110,15 @@ void ConfigurationForm::restoreDefaults(void)
 		switch(confs_stw->currentIndex())
 		{
 			case GENERAL_CONF_WGT:
-				dynamic_cast<GeneralConfigWidget *>(this->getConfigurationWidget(0))->restoreDefaults();
+				dynamic_cast<GeneralConfigWidget *>(this->getConfigurationWidget(GENERAL_CONF_WGT))->restoreDefaults();
 			break;
 
 			case APPEARANCE_CONF_WGT:
-				dynamic_cast<AppearanceConfigWidget *>(this->getConfigurationWidget(1))->restoreDefaults();
+				dynamic_cast<AppearanceConfigWidget *>(this->getConfigurationWidget(APPEARANCE_CONF_WGT))->restoreDefaults();
 			break;
 
 			case CONNECTIONS_CONF_WGT:
-				dynamic_cast<ConnectionsConfigWidget *>(this->getConfigurationWidget(2))->restoreDefaults();
+				dynamic_cast<ConnectionsConfigWidget *>(this->getConfigurationWidget(CONNECTIONS_CONF_WGT))->restoreDefaults();
 			break;
 
 			default:

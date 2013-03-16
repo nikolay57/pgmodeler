@@ -1,3 +1,21 @@
+/*
+# PostgreSQL Database Modeler (pgModeler)
+#
+# Copyright 2006-2013 - Raphael Araújo e Silva <rkhaotix@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# The complete text of GPLv3 is at LICENSE file on source code root directory.
+# Also, you can get the complete GNU General Public License at <http://www.gnu.org/licenses/>
+*/
+
 #include "xmlparser.h"
 
 QString XMLParser::xml_doc_filename="";
@@ -311,7 +329,13 @@ QString XMLParser::getElementContent(void)
 	if(!root_elem)
 		throw Exception(ERR_OPR_NOT_ALOC_ELEM_TREE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
-	return(QString(reinterpret_cast<char *>(curr_elem->content)));
+	/* If the current element has  <![CDATA[]]> node returns the content of the CDATA instead
+	of return the content of the element itself */
+	if(curr_elem->next && curr_elem->next->type == XML_CDATA_SECTION_NODE)
+		return(QString(reinterpret_cast<char *>(curr_elem->next->content)));
+	else
+		//Return the content of the element when is not a CDATA node
+		return(QString(reinterpret_cast<char *>(curr_elem->content)));
 }
 
 QString XMLParser::getElementName(void)

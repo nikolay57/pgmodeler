@@ -1,3 +1,21 @@
+/*
+# PostgreSQL Database Modeler (pgModeler)
+#
+# Copyright 2006-2013 - Raphael Araújo e Silva <rkhaotix@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# The complete text of GPLv3 is at LICENSE file on source code root directory.
+# Also, you can get the complete GNU General Public License at <http://www.gnu.org/licenses/>
+*/
+
 #include "role.h"
 
 unsigned Role::role_id=0;
@@ -6,7 +24,7 @@ Role::Role(void)
 {
 	obj_type=OBJ_ROLE;
 	object_id=Role::role_id++;
-	sysid=100;
+	sysid=-1;
 
 	for(unsigned i=0; i < 6; i++)
 		options[i]=false;
@@ -29,10 +47,10 @@ Role::Role(void)
 	attributes[ParsersAttributes::GROUP]="";
 }
 
-void Role::setSysid(unsigned sysid)
+void Role::setSysid(int sysid)
 {
 	//Raises an error if the id is less then 100 (sysid < 100 are system reserved)
-	if(sysid < 100)
+	if(sysid >=0 && sysid < 100)
 		throw Exception(ERR_ASG_INV_ID_USER,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 	this->sysid=sysid;
@@ -243,7 +261,7 @@ bool Role::isRoleExists(unsigned role_type, Role *role)
 	return(found);
 }
 
-unsigned Role::getSysid(void)
+int Role::getSysid(void)
 {
 	return(sysid);
 }
@@ -333,7 +351,7 @@ QString Role::getCodeDefinition(unsigned def_type)
 	if(conn_limit >= 0)
 		attributes[ParsersAttributes::CONN_LIMIT]=QString("%1").arg(conn_limit);
 
-	attributes[ParsersAttributes::SYSID]=QString("%1").arg(sysid);
+	attributes[ParsersAttributes::SYSID]=(sysid >=0 ? QString("%1").arg(sysid) : "");
 
 	return(BaseObject::__getCodeDefinition(def_type));
 }

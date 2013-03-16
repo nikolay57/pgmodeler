@@ -1,3 +1,21 @@
+/*
+# PostgreSQL Database Modeler (pgModeler)
+#
+# Copyright 2006-2013 - Raphael Araújo e Silva <rkhaotix@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# The complete text of GPLv3 is at LICENSE file on source code root directory.
+# Also, you can get the complete GNU General Public License at <http://www.gnu.org/licenses/>
+*/
+
 #include "function.h"
 
 Parameter::Parameter(void)
@@ -42,6 +60,11 @@ void Parameter::operator = (const Parameter &param)
 
 QString Parameter::getCodeDefinition(unsigned def_type)
 {
+	return(this->getCodeDefinition(def_type, false));
+}
+
+QString Parameter::getCodeDefinition(unsigned def_type, bool reduced_form)
+{
 	if(def_type==SchemaParser::SQL_DEFINITION)
 		attributes[ParsersAttributes::NAME]=BaseObject::formatName(obj_name);
 	else
@@ -52,7 +75,7 @@ QString Parameter::getCodeDefinition(unsigned def_type)
 	attributes[ParsersAttributes::DEFAULT_VALUE]=default_value;
 	attributes[ParsersAttributes::TYPE]=type.getCodeDefinition(def_type);
 
-	return(BaseObject::__getCodeDefinition(def_type));
+	return(BaseObject::getCodeDefinition(def_type, reduced_form));
 }
 
 unsigned Function::function_id=40000;
@@ -435,20 +458,16 @@ QString Function::getSignature(void)
 
 void Function::createSignature(bool format)
 {
-	Parameter param;
 	QString str_param;
 	unsigned i, count;
 
 	count=parameters.size();
 	for(i=0; i < count; i++)
-	{
-		param=parameters[i];
-		str_param+=(*param.getType());
+		str_param+=parameters[i].getCodeDefinition(SchemaParser::SQL_DEFINITION, true).trimmed();
 
-		if(i < (count-1)) str_param+=",";
-	}
+	str_param.remove(str_param.length()-1, 1);
 
-	//Signature format NAME(PARAM1_TYPE,PARAM2_TYPE,...,PARAMn_TYPE)
+	//Signature format NAME(IN|OUT PARAM1_TYPE,IN|OUT PARAM2_TYPE,...,IN|OUT PARAMn_TYPE)
 	signature=this->getName(format) + QString("(") + str_param + QString(")");
 }
 

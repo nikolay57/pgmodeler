@@ -342,7 +342,10 @@ namespace ParsersAttributes {
 	PRINT_GRID="print-grid",
 	PRINT_PG_NUM="print-pg-num",
 	SRID="srid",
-	RECT_VISIBLE="rect-visible";
+	RECT_VISIBLE="rect-visible",
+	USE_SORTING="use-sorting",
+	STORAGE_PARAMS="stg-params",
+	DDL_END_TOKEN="-- ddl-end --";
 }
 
 #endif

@@ -1,3 +1,21 @@
+/*
+# PostgreSQL Database Modeler (pgModeler)
+#
+# Copyright 2006-2013 - Raphael Araújo e Silva <rkhaotix@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# The complete text of GPLv3 is at LICENSE file on source code root directory.
+# Also, you can get the complete GNU General Public License at <http://www.gnu.org/licenses/>
+*/
+
 #include "databasemodel.h"
 
 unsigned DatabaseModel::dbmodel_id=20000;
@@ -4292,7 +4310,7 @@ Index *DatabaseModel::createIndex(Table *table)
 	Column *column=NULL;
 	OperatorClass *op_class=NULL;
 	QString elem, str_aux, expr;
-	bool inc_idx_table=false,
+	bool inc_idx_table=false, use_sorting=false,
 			asc_order=false, nulls_first=false;
 
 	try
@@ -4337,8 +4355,10 @@ Index *DatabaseModel::createIndex(Table *table)
 
 					if(elem==ParsersAttributes::INDEX_ELEMENT)
 					{
+						XMLParser::getElementAttributes(attribs);
 						nulls_first=(attribs[ParsersAttributes::NULLS_FIRST]==ParsersAttributes::_TRUE_);
 						asc_order=(attribs[ParsersAttributes::ASC_ORDER]==ParsersAttributes::_TRUE_);
+						use_sorting=(attribs[ParsersAttributes::USE_SORTING]!=ParsersAttributes::_FALSE_);
 						column=NULL;
 						expr.clear();
 
@@ -4388,9 +4408,9 @@ Index *DatabaseModel::createIndex(Table *table)
 						while(XMLParser::accessElement(XMLParser::NEXT_ELEMENT));
 
 						if(!expr.isEmpty())
-							index->addElement(expr, op_class, asc_order, nulls_first);
+							index->addElement(expr, op_class, use_sorting, asc_order, nulls_first);
 						else
-							index->addElement(column, op_class, asc_order, nulls_first);
+							index->addElement(column, op_class, use_sorting, asc_order, nulls_first);
 
 						XMLParser::restorePosition();
 					}

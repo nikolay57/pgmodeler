@@ -1,3 +1,21 @@
+/*
+# PostgreSQL Database Modeler (pgModeler)
+#
+# Copyright 2006-2013 - Raphael Araújo e Silva <rkhaotix@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# The complete text of GPLv3 is at LICENSE file on source code root directory.
+# Also, you can get the complete GNU General Public License at <http://www.gnu.org/licenses/>
+*/
+
 #include "baserelationship.h"
 #include <QApplication>
 
@@ -214,26 +232,33 @@ bool BaseRelationship::isTableMandatory(unsigned table_id)
 		return(dst_mandatory);
 }
 
+void BaseRelationship::setConnected(bool value)
+{
+	connected=value;
+
+	src_table->setModified(true);
+
+	if(dst_table!=src_table)
+	 dst_table->setModified(true);
+
+	dynamic_cast<Schema *>(src_table->getSchema())->setModified(true);
+
+	if(dst_table->getSchema()!=src_table->getSchema())
+		dynamic_cast<Schema *>(dst_table->getSchema())->setModified(true);
+
+	this->setModified(true);
+}
+
 void BaseRelationship::disconnectRelationship(void)
 {
 	if(connected)
-	{
-		connected=false;
-		src_table->setModified(true);
-		dst_table->setModified(true);
-		this->setModified(true);
-	}
+		setConnected(false);
 }
 
 void BaseRelationship::connectRelationship(void)
 {
 	if(!connected)
-	{
-		connected=true;
-		src_table->setModified(true);
-		dst_table->setModified(true);
-		this->setModified(true);
-	}
+		setConnected(true);
 }
 
 Textbox *BaseRelationship::getLabel(unsigned label_id)

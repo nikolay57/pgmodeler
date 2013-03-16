@@ -1,3 +1,21 @@
+/*
+# PostgreSQL Database Modeler (pgModeler)
+#
+# Copyright 2006-2013 - Raphael Araújo e Silva <rkhaotix@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# The complete text of GPLv3 is at LICENSE file on source code root directory.
+# Also, you can get the complete GNU General Public License at <http://www.gnu.org/licenses/>
+*/
+
 #include "trigger.h"
 
 Trigger::Trigger(void)
@@ -82,14 +100,14 @@ void Trigger::setFunction(Function *func)
 		//Case the function doesn't returns 'trigger' it cannot be used with the trigger thus raise an error
 		if(func->getReturnType()!="trigger")
 			throw Exception(ERR_ASG_INV_TRIGGER_FUNCTION,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-		//Case the functions does not has any parameter raise an error
-		else if(func->getParameterCount()==0)
+		//Case the function has some parameters raise an error
+		else if(func->getParameterCount()!=0)
 			throw Exception(Exception::getErrorMessage(ERR_ASG_FUNC_INV_PARAM_COUNT)
 											.arg(Utf8String::create(this->getName()))
 											.arg(BaseObject::getTypeName(OBJ_TRIGGER)),
 											ERR_ASG_FUNC_INV_PARAM_COUNT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-		else
-			this->function=func;
+
+		this->function=func;
 	}
 }
 

@@ -1,6 +1,6 @@
 # XML definition for domains
-# CAUTION: Do not modify this file unless you know what
-#          you are doing.
+# CAUTION: Do not modify this file unless you know what you are doing.
+#          Code generation can be broken if incorrect changes are made.
 [<domain name=] "@{name}"
 
 %if @{reduced-form} %then
@@ -25,7 +25,7 @@
   $tb @{type}
 
   %if @{expression} %then
-   $tb <expression>@{expression}</expression>$br
+   $tb <expression> <! $ob CDATA $ob @{expression} $cb $cb > </expression>$br
   %end
 
   </domain>  $br $br

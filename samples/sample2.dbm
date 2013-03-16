@@ -88,7 +88,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="void"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="oid"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_validator"/>
@@ -127,13 +127,13 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="any"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="cstring"/>
 	</parameter>
-	<parameter name="param2" in="true" out="true">
+	<parameter name="param2" in="false" out="false">
 		<type name="oid"/>
 	</parameter>
-	<parameter name="param3" in="true" out="true">
+	<parameter name="param3" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -154,7 +154,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="cstring"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="any"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -175,13 +175,13 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="any"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="internal"/>
 	</parameter>
-	<parameter name="param2" in="true" out="true">
+	<parameter name="param2" in="false" out="false">
 		<type name="oid"/>
 	</parameter>
-	<parameter name="param3" in="true" out="true">
+	<parameter name="param3" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -202,7 +202,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="bytea"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="any"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -223,7 +223,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="integer"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="cstring" dimension="1"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -244,7 +244,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="cstring"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -265,7 +265,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="boolean"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="internal"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -286,13 +286,13 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="float"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
-	<parameter name="param2" in="true" out="true">
+	<parameter name="param2" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
-	<parameter name="param31" in="true" out="true">
+	<parameter name="param31" in="false" out="false">
 		<type name="boolean"/>
 	</parameter>
 	<definition>SELECT * FROM BLA</definition>
@@ -313,19 +313,19 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="void"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
-	<parameter name="param2" in="true" out="true">
+	<parameter name="param2" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
-	<parameter name="param3" in="true" out="true">
+	<parameter name="param3" in="false" out="false">
 		<type name="cstring"/>
 	</parameter>
-	<parameter name="param4" in="true" out="true">
+	<parameter name="param4" in="false" out="false">
 		<type name="internal"/>
 	</parameter>
-	<parameter name="param5" in="true" out="true">
+	<parameter name="param5" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -346,10 +346,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="void"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
-	<parameter name="param2" in="true" out="true">
+	<parameter name="param2" in="false" out="false">
 		<type name="text"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -370,10 +370,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="void"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="text"/>
 	</parameter>
-	<parameter name="param2" in="true" out="true">
+	<parameter name="param2" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -394,16 +394,16 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="integer"/>
 	</return-type>
-	<parameter name="param0" in="true" out="true">
+	<parameter name="param0" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="text"/>
 	</parameter>
-	<parameter name="param2" in="true" out="true">
+	<parameter name="param2" in="false" out="false">
 		<type name="varchar"/>
 	</parameter>
-	<parameter name="param3" in="true" out="true">
+	<parameter name="param3" in="false" out="false">
 		<type name="char"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -424,7 +424,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="integer"/>
 	</return-type>
-	<parameter name="param1" in="true" out="true">
+	<parameter name="param1" in="false" out="false">
 		<type name="integer"/>
 	</parameter>
 	<definition library="/usr/local/lib/funcoes.so" symbol="funcao_handler"/>
@@ -444,18 +444,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<return-type>
 	<type name="trigger"/>
 	</return-type>
-	<parameter name="p1">
-		<type name="integer" dimension="1"/>
-	</parameter>
-	<parameter name="P2">
-		<type name="integer"/>
-	</parameter>
-	<parameter name="p3">
-		<type name="integer"/>
-	</parameter>
-	<parameter name="p4">
-		<type name="integer"/>
-	</parameter>
 	<definition>SELECT /* */ FROM</definition>
 </function>
 
@@ -626,17 +614,17 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<trigger name="gatilho_teste" firing-type="BEFORE" per-line="false"
 		 ins-event="true" del-event="true" upd-event="true" trunc-event="false" arguments="10,15,20,25">
 		<comment>Gatilho teste na tabela teste</comment>
-		<function signature="public.funcao_teste(integer[],integer,integer,integer)"/>
+		<function signature="public.funcao_teste()"/>
 	</trigger>
 	<trigger name="gatilho_teste1" firing-type="BEFORE" per-line="false"
 		 ins-event="true" del-event="true" upd-event="true" trunc-event="false" arguments="10,15,20,25">
 		<comment>Gatilho teste na tabela teste</comment>
-		<function signature="public.funcao_teste(integer[],integer,integer,integer)"/>
+		<function signature="public.funcao_teste()"/>
 	</trigger>
 	<trigger name="gatilho_teste2" firing-type="BEFORE" per-line="false"
 		 ins-event="true" del-event="true" upd-event="true" trunc-event="false" arguments="10,15,20,25">
 		<comment>Gatilho teste na tabela teste</comment>
-		<function signature="public.funcao_teste(integer[],integer,integer,integer)"/>
+		<function signature="public.funcao_teste()"/>
 	</trigger>
 </table>
 
@@ -1189,7 +1177,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 deferrable="true" defer-type="INITIALLY DEFERRED" ref-table="&quot;schema_A&quot;.&quot;table_A1&quot;"
 	 table="public.&quot;tabela_B_4c&quot;">
 		<comment>Gatilho teste na tabela teste</comment>
-		<function signature="public.funcao_teste(integer[],integer,integer,integer)"/>
+		<function signature="public.funcao_teste()"/>
 	<columns names="&quot;coluna_Teste2&quot;"/>
 </trigger>
 <relationship name="table_C4_has_many_table_C3"

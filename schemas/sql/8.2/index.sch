@@ -1,7 +1,7 @@
 # SQL definition for indexes
 # PostgreSQL Version: 8.2
-# CAUTION: Do not modify this file unless you know what
-#          you are doing.
+# CAUTION: Do not modify this file unless you know what you are doing.
+#          Code generation can be broken if incorrect changes are made.
 
 [-- object: ] @{name} [ | type: ] @{sql-object} [ -- ] $br
 
@@ -23,7 +23,11 @@ $tb ( @{elements} ) $br
   $tb (@{expression}) $sp 
 %end
 
-$tb [WITH (FILLFACTOR = ] @{factor} [)] $br
+%if @{stg-params} %then
+ %if@{factor} %then
+   $tb [WITH (FILLFACTOR = ] @{factor} [)] $br
+ %end
+%end
 
 %if @{tablespace} %then
  $tb [TABLESPACE ] @{tablespace} $br
@@ -35,3 +39,7 @@ $tb [WITH (FILLFACTOR = ] @{factor} [)] $br
 ;$br
 
 %if @{comment} %then  @{comment} %end
+
+# This is a special token that pgModeler recognizes as end of DDL command
+# when exporting models directly to DBMS. DO NOT REMOVE THIS TOKEN!
+[-- ddl-end --] $br $br
