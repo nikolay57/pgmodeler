@@ -5,11 +5,15 @@
 
 [-- object: ] @{name} [ | type: ] @{sql-object} [ -- ] $br
 
+%if @{sql-disabled} %then
+[/* The SQL code for this object was disabled on the editing form.] $br
+%end
+
 [CREATE ROLE ] @{name} [ WITH ] $br
 
-# CREATEUSER | NOCREATEUSER --> Mesmo que SUPERUSER | NOSUPERUSER
+# CREATEUSER | NOCREATEUSER --> Same as SUPERUSER | NOSUPERUSER
 $tb %if @{superuser} %then SUPERUSER %else NOSUPERUSER %end $br
-$tb %if @{createdb} %then CREATEDB %else CREATEDB %end $br
+$tb %if @{createdb} %then CREATEDB %else NOCREATEDB %end $br
 $tb %if @{createrole} %then CREATEROLE %else NOCREATEROLE %end $br
 $tb %if @{inherit} %then INHERIT %else NOINHERIT %end $br
 $tb %if @{login} %then LOGIN %else NOLOGIN %end $br
@@ -37,6 +41,10 @@ $tb %if @{connlimit} %then [CONNECTION LIMIT ] @{connlimit} %end $br
 ; $br
 
 %if @{comment} %then @{comment} %end
+
+%if @{sql-disabled} %then
+[ */] $br
+%end
 
 # This is a special token that pgModeler recognizes as end of DDL command
 # when exporting models directly to DBMS. DO NOT REMOVE THIS TOKEN!

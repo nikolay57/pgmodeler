@@ -42,14 +42,16 @@ Known bugs
 Change Log
 ----------
 
-v0.4.0_r1
+v0.4.1_r1
 ---------
 
-<em>Release date: March 04, 2013 </em>
+<em>Release date: March 19, 2013 </em>
 
-[New]: introducing the "pgModeler Wiki" as the main project's support resource.
-[Fix]: when main windows is closed the overview widget is closed too.
-[Fix]: corrected a bug on operation list widget that was converting an item name to UTF-8 twice.
+* [Change]: user can now prepend a CTE (commom table expression, a.k.a "with queries") on view's definition.
+* [Change]: user can now create a single reference containing a expression that defines the entire view.
+* [Change]: improvements on permissions, user now can control GRANTs and REVOKEs via permission editing form.
+* [Fix]: fixed invalid UTF-8 chars on function definition.
+* [Fix]: fixed unavailable "nocreatedb" role option.
 
 The complete change log can be found on [CHANGELOG.md](https://github.com/pgmodeler/pgmodeler/blob/master/CHANGELOG.md) file.
 

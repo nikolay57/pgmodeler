@@ -125,8 +125,8 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
-    <addaction name="action_about"/>
     <addaction name="action_wiki"/>
+    <addaction name="action_about"/>
    </widget>
    <widget class="QMenu" name="show_menu">
     <property name="title">
@@ -435,6 +435,9 @@
    <property name="toolTip">
     <string>Next</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Right</string>
+   </property>
   </action>
   <action name="action_previous">
    <property name="enabled">
@@ -449,6 +452,9 @@
    </property>
    <property name="toolTip">
     <string>Previous</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Left</string>
    </property>
   </action>
   <action name="action_save_as">
@@ -624,6 +630,9 @@
    <property name="toolTip">
     <string>Align objects position to grid</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+H</string>
+   </property>
   </action>
   <action name="action_fullscreen">
    <property name="checkable">
@@ -708,6 +717,9 @@
    </property>
    <property name="toolTip">
     <string>Show the model overview</string>
+   </property>
+   <property name="shortcut">
+    <string>F10</string>
    </property>
   </action>
   <action name="action_wiki">

@@ -86,7 +86,6 @@ ModelWidget::ModelWidget(QWidget *parent) : QWidget(parent)
 	QFont font;
 	QLabel *label=NULL;
 	QGridLayout *grid=NULL;
-	QMenu *rels_menu=NULL;
 	QAction *action=NULL;
 	QString str_ico, str_txt,
 			rel_types_cod[]={"11", "1n", "nn", "dep", "gen" },
@@ -205,7 +204,7 @@ ModelWidget::ModelWidget(QWidget *parent) : QWidget(parent)
 	action_cut->setShortcut(QKeySequence("Ctrl+X"));
 	action_cut->setToolTip(trUtf8("Cut the selected object(s)"));
 
-	action_deps_refs=new QAction(QIcon(QString(":/icones/icones/depsrefs.png")), trUtf8("Depend. / Refer."), this);
+	action_deps_refs=new QAction(QIcon(QString(":/icones/icones/depsrefs.png")), trUtf8("Dependencies"), this);
 	action_deps_refs->setToolTip(trUtf8("Displays objects that reference and that are dependent of the selected object"));
 
 	action_new_object=new QAction(QIcon(QString(":/icones/icones/novoobjeto.png")), trUtf8("New object"), this);
@@ -222,7 +221,7 @@ ModelWidget::ModelWidget(QWidget *parent) : QWidget(parent)
 	action_moveto_schema->setToolTip(trUtf8("Move the object to another schema"));
 	action_moveto_schema->setMenu(&schemas_menu);
 
-	action_edit_perms=new QAction(QIcon(QString(":/icones/icones/grant.png")), trUtf8("Edit permissions"), this);
+	action_edit_perms=new QAction(QIcon(QString(":/icones/icones/permission.png")), trUtf8("Edit permissions"), this);
 	action_edit_perms->setToolTip(trUtf8("Edit object's permissions"));
 	action_edit_perms->setShortcut(QKeySequence("Ctrl+E"));
 

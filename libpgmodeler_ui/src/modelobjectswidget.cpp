@@ -26,7 +26,7 @@ ModelObjectsWidget::ModelObjectsWidget(bool simplified_view, QWidget *parent, Qt
 												OBJ_TYPE, OBJ_TABLESPACE, OBJ_OPFAMILY, OBJ_OPCLASS,
 												OBJ_RELATIONSHIP, OBJ_TEXTBOX, OBJ_COLUMN, OBJ_CONSTRAINT,
 												OBJ_TRIGGER, OBJ_INDEX, OBJ_RULE };
-	int type_id, type_count=24;
+	int type_id, type_count=sizeof(type)/sizeof(ObjectType);
 	QListWidgetItem *item=NULL;
 	QPixmap icon;
 	QString str_aux;
@@ -120,9 +120,37 @@ void ModelObjectsWidget::selectObject(void)
 	if(tree_view_tb->isChecked())
 	{
 		QTreeWidgetItem *tree_item=objectstree_tw->currentItem();
+		ObjectType obj_type=BASE_OBJECT;
 
 		if(tree_item)
+		{
 			selected_object=reinterpret_cast<BaseObject *>(tree_item->data(0,Qt::UserRole).value<void *>());
+			obj_type=static_cast<ObjectType>(tree_item->data(1,Qt::UserRole).toUInt());
+		}
+
+		//If user select a group item popups a "New [OBJECT]" menu
+		if(!selected_object && QApplication::mouseButtons()==Qt::RightButton &&
+			 obj_type!=OBJ_COLUMN && obj_type!=OBJ_CONSTRAINT && obj_type!=OBJ_RULE &&
+			 obj_type!=OBJ_INDEX && obj_type!=OBJ_TRIGGER)
+		{
+			QAction act(QPixmap(QString(":/icones/icones/") + BaseObject::getSchemaName(obj_type) + QString(".png")),
+									trUtf8("New") + " " + BaseObject::getTypeName(obj_type), NULL);
+			QMenu popup;
+
+			//If not a relationship, connect the action to the addNewObject method of the model wiget
+			if(obj_type!=OBJ_RELATIONSHIP)
+			{
+				act.setData(QVariant(obj_type));
+				connect(&act, SIGNAL(triggered()), model_wgt, SLOT(addNewObject()));
+			}
+			//Case is a relationship, insert the relationship menu of the model wiget into the action
+			else
+				act.setMenu(model_wgt->rels_menu);
+
+			popup.addAction(&act);
+			popup.exec(QCursor::pos());
+			disconnect(&act,NULL,model_wgt,NULL);
+		}
 	}
 	else
 	{
@@ -271,11 +299,13 @@ void ModelObjectsWidget::updateObjectsList(void)
 													OBJ_SCHEMA, OBJ_AGGREGATE, OBJ_OPERATOR, OBJ_SEQUENCE,
 													OBJ_ROLE, OBJ_CONVERSION, OBJ_CAST, OBJ_LANGUAGE,
 													OBJ_TYPE, OBJ_TABLESPACE, OBJ_OPFAMILY, OBJ_OPCLASS,
-													OBJ_RELATIONSHIP, OBJ_TEXTBOX/*, BASE_RELATIONSHIP */ },
+													OBJ_RELATIONSHIP, OBJ_TEXTBOX },
 				subtypes[]={ OBJ_COLUMN, OBJ_CONSTRAINT,
 										 OBJ_TRIGGER, OBJ_INDEX, OBJ_RULE };
 
-		int type_cnt=19, subtype_cnt=5, type_id, count, count1, idx, tab_id;
+		int type_cnt=sizeof(types)/sizeof(ObjectType),
+				subtype_cnt=sizeof(subtypes)/sizeof(ObjectType),
+				type_id, count, count1, idx, tab_id;
 
 		try
 		{
@@ -563,11 +593,11 @@ void ModelObjectsWidget::updatedSchemaTree(QTreeWidgetItem *root)
 		vector<BaseObject *> obj_list;
 		QFont font;
 		QTreeWidgetItem *item=NULL, *item1=NULL, *item2=NULL, *item3=NULL, *item4=NULL;
-		int count, count2, i, i1, i2;
 		ObjectType types[]={ OBJ_VIEW, OBJ_FUNCTION, OBJ_AGGREGATE,
 												 OBJ_DOMAIN, OBJ_TYPE, OBJ_CONVERSION,
 												 OBJ_OPERATOR, OBJ_OPFAMILY, OBJ_OPCLASS,
 												 OBJ_SEQUENCE };
+		int count, count2, type_cnt=sizeof(types)/sizeof(ObjectType), i, i1, i2;
 
 		QPixmap sch_icon=QPixmap(QString(":/icones/icones/") +
 															QString(BaseObject::getSchemaName(OBJ_SCHEMA)) +
@@ -582,6 +612,7 @@ void ModelObjectsWidget::updatedSchemaTree(QTreeWidgetItem *root)
 		count=(db_model->getObjectCount(OBJ_SCHEMA));
 		item=new QTreeWidgetItem(root);
 		item->setIcon(0,group_icon);
+		item->setData(1, Qt::UserRole, QVariant::fromValue<unsigned>(OBJ_SCHEMA));
 
 		//Create the schema group item
 		item->setText(0,BaseObject::getTypeName(OBJ_SCHEMA) +
@@ -624,7 +655,7 @@ void ModelObjectsWidget::updatedSchemaTree(QTreeWidgetItem *root)
 				updateTableTree(item2, schema);
 
 				//Creates the object group at schema level (function, domain, sequences, etc)
-				for(i1=0; i1 < 10; i1++)
+				for(i1=0; i1 < type_cnt; i1++)
 				{
 					if(visible_objs_map[types[i1]])
 					{
@@ -641,6 +672,8 @@ void ModelObjectsWidget::updatedSchemaTree(QTreeWidgetItem *root)
 						item3->setText(0,
 													 BaseObject::getTypeName(types[i1]) +
 													 QString(" (%1)").arg(count2));
+						item3->setData(1, Qt::UserRole, QVariant::fromValue<unsigned>(types[i1]));
+
 						font=item3->font(0);
 						font.setItalic(true);
 						item3->setFont(0, font);
@@ -702,12 +735,12 @@ void ModelObjectsWidget::updateTableTree(QTreeWidgetItem *root, BaseObject *sche
 		vector<BaseObject *> obj_list;
 		Table *table=NULL;
 		QTreeWidgetItem *item=NULL, *item1=NULL, *item2=NULL, *item3=NULL;
-		int count, count1, i, i1, i2;
 		QString str_aux;
 		QFont font;
 		ConstraintType constr_type;
 		ObjectType types[]={ OBJ_COLUMN, OBJ_CONSTRAINT, OBJ_RULE,
 												 OBJ_TRIGGER, OBJ_INDEX };
+		int count, count1, type_cnt=sizeof(types)/sizeof(ObjectType), i, i1, i2;
 		QPixmap group_icon=QPixmap(QString(":/icones/icones/") +
 														QString(BaseObject::getSchemaName(OBJ_TABLE)) +
 														QString("_grp") + QString(".png"));
@@ -722,6 +755,8 @@ void ModelObjectsWidget::updateTableTree(QTreeWidgetItem *root, BaseObject *sche
 			item->setIcon(0,group_icon);
 			item->setText(0,BaseObject::getTypeName(OBJ_TABLE) +
 										QString(" (%1)").arg(obj_list.size()));
+			item->setData(1, Qt::UserRole, QVariant::fromValue<unsigned>(OBJ_TABLE));
+
 			font=item->font(0);
 			font.setItalic(true);
 			item->setFont(0, font);
@@ -749,7 +784,7 @@ void ModelObjectsWidget::updateTableTree(QTreeWidgetItem *root, BaseObject *sche
 				}
 
 				//Creating the group for the child objects (column, rules, triggers, indexes and constraints)
-				for(i1=0; i1 < 5; i1++)
+				for(i1=0; i1 < type_cnt; i1++)
 				{
 					if(visible_objs_map[types[i1]])
 					{
@@ -832,13 +867,13 @@ void ModelObjectsWidget::updateDatabaseTree(void)
 	{
 		QString str_aux;
 		BaseObject *object=NULL;
-		unsigned count, i, i1, rel_type;
 		QTreeWidgetItem *root=NULL,*item1=NULL, *item2=NULL;
 		QFont font;
 		vector<BaseObject *> tree_state, obj_list;
 		ObjectType types[]={ OBJ_ROLE, OBJ_TABLESPACE,
 												 OBJ_LANGUAGE, OBJ_CAST, OBJ_TEXTBOX,
 												 OBJ_RELATIONSHIP };
+		unsigned count, i, i1, rel_type, type_cnt=sizeof(types)/sizeof(ObjectType);
 
 		try
 		{
@@ -855,9 +890,9 @@ void ModelObjectsWidget::updateDatabaseTree(void)
 																QString(".png")));
 				objectstree_tw->insertTopLevelItem(0,root);
 
-				root->setText(0,Utf8String::create(/*modelo_wgt->*/db_model->getName()));
-				root->setToolTip(0,Utf8String::create(/*modelo_wgt->*/db_model->getName()));
-				root->setData(0, Qt::UserRole, generateItemValue(/*modelo_wgt->*/db_model));
+				root->setText(0,Utf8String::create(db_model->getName()));
+				root->setToolTip(0,Utf8String::create(db_model->getName()));
+				root->setData(0, Qt::UserRole, generateItemValue(db_model));
 
 				if(db_model->isProtected())
 				{
@@ -869,7 +904,7 @@ void ModelObjectsWidget::updateDatabaseTree(void)
 
 				updatedSchemaTree(root);
 
-				for(i=0; i < 6; i++)
+				for(i=0; i < type_cnt; i++)
 				{
 					if(visible_objs_map[types[i]])
 					{
@@ -878,6 +913,7 @@ void ModelObjectsWidget::updateDatabaseTree(void)
 
 						item1->setIcon(0,QPixmap(QString(":/icones/icones/") +
 																		 str_aux + QString("_grp") + QString(".png")));
+						item1->setData(1, Qt::UserRole, QVariant::fromValue<unsigned>(types[i]));
 
 						obj_list=(*db_model->getObjectList(types[i]));
 

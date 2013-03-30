@@ -662,21 +662,21 @@ void DatabaseModel::setProtected(bool value)
 
 void DatabaseModel::destroyObjects(void)
 {
-	ObjectType types[20]={
+	ObjectType types[]={
 		BASE_RELATIONSHIP,OBJ_RELATIONSHIP, OBJ_TABLE, OBJ_VIEW,
 		OBJ_AGGREGATE, OBJ_OPERATOR,
 		OBJ_SEQUENCE, OBJ_CONVERSION,
 		OBJ_CAST, OBJ_OPFAMILY, OBJ_OPCLASS,
 		BASE_RELATIONSHIP, OBJ_TEXTBOX,
 		OBJ_DOMAIN, OBJ_TYPE, OBJ_FUNCTION, OBJ_SCHEMA,
-		OBJ_LANGUAGE, OBJ_TABLESPACE, OBJ_ROLE };
+		OBJ_LANGUAGE, OBJ_TABLESPACE, OBJ_ROLE, OBJ_PERMISSION };
 	vector<BaseObject *> *list=NULL;
 	BaseObject *object=NULL;
-	unsigned i;
+	unsigned i, cnt=sizeof(types)/sizeof(ObjectType);
 
 	disconnectRelationships();
 
-	for(i=0; i < 20; i++)
+	for(i=0; i < cnt; i++)
 	{
 		list=getObjectList(types[i]);
 
@@ -2390,7 +2390,8 @@ int DatabaseModel::getPermissionIndex(Permission *perm)
 				}
 			}
 
-			if(perm==perm_aux || ref_role)
+			//If the permissions references the same roles but one is a REVOKE and other GRANT they a considered different
+			if(perm==perm_aux || (ref_role && perm->isRevoke()==perm_aux->isRevoke()))
 				perm_idx=itr-permissions.begin();
 
 			itr++;
@@ -2751,7 +2752,7 @@ void DatabaseModel::setBasicAttributes(BaseObject *object)
 	BaseObject *tabspc=NULL, *owner=NULL;
 	Schema *schema=NULL;
 	ObjectType obj_type=BASE_OBJECT, obj_type_aux;
-	bool has_error=false, protected_obj=false;
+	bool has_error=false, protected_obj=false, sql_disabled=false;
 
 	if(!object)
 		throw Exception(ERR_OPR_NOT_ALOC_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
@@ -2763,6 +2764,7 @@ void DatabaseModel::setBasicAttributes(BaseObject *object)
 		object->setName(attribs[ParsersAttributes::NAME]);
 
 	protected_obj=attribs[ParsersAttributes::PROTECTED]==ParsersAttributes::_TRUE_;
+	sql_disabled=attribs[ParsersAttributes::SQL_DISABLED]==ParsersAttributes::_TRUE_;
 
 	XMLParser::savePosition();
 
@@ -2831,6 +2833,7 @@ void DatabaseModel::setBasicAttributes(BaseObject *object)
 
 	XMLParser::restorePosition();
 	object->setProtected(protected_obj);
+	object->setSQLDisabled(sql_disabled);
 
 	if(has_error)
 	{
@@ -4754,6 +4757,7 @@ View *DatabaseModel::createView(void)
 	vector<Reference> refs;
 	unsigned type;
 	int ref_idx, i, count;
+	bool refs_in_expr=false;
 
 	try
 	{
@@ -4832,22 +4836,32 @@ View *DatabaseModel::createView(void)
 					{
 						XMLParser::savePosition();
 						XMLParser::getElementAttributes(attribs);
-
-						if(attribs[ParsersAttributes::TYPE]==ParsersAttributes::SELECT_EXP)
-							type=Reference::SQL_REFER_SELECT;
-						else if(attribs[ParsersAttributes::TYPE]==ParsersAttributes::FROM_EXP)
-							type=Reference::SQL_REFER_FROM;
-						else
-							type=Reference::SQL_REFER_WHERE;
-
 						XMLParser::accessElement(XMLParser::CHILD_ELEMENT);
-						list_aux=XMLParser::getElementContent().split(',');
-						count=list_aux.size();
 
-						for(i=0; i < count; i++)
+						if(attribs[ParsersAttributes::TYPE]==ParsersAttributes::CTE_EXPRESSION)
+							view->setCommomTableExpression(XMLParser::getElementContent());
+						else
 						{
-							ref_idx=list_aux[i].toInt();
-							view->addReference(refs[ref_idx],type);
+							if(attribs[ParsersAttributes::TYPE]==ParsersAttributes::SELECT_EXP)
+								type=Reference::SQL_REFER_SELECT;
+							else if(attribs[ParsersAttributes::TYPE]==ParsersAttributes::FROM_EXP)
+								type=Reference::SQL_REFER_FROM;
+							else
+								type=Reference::SQL_REFER_WHERE;
+
+
+							list_aux=XMLParser::getElementContent().split(',');
+							count=list_aux.size();
+
+							//Indicates that some of the references were used in the expressions
+							if(cout > 0 && !refs_in_expr)
+								refs_in_expr=true;
+
+							for(i=0; i < count; i++)
+							{
+								ref_idx=list_aux[i].toInt();
+								view->addReference(refs[ref_idx],type);
+							}
 						}
 
 						XMLParser::restorePosition();
@@ -4855,6 +4869,28 @@ View *DatabaseModel::createView(void)
 				}
 			}
 			while(XMLParser::accessElement(XMLParser::NEXT_ELEMENT));
+		}
+
+		/** Special case for refereces used as view definition **
+
+			If the flag 'refs_in_expr' isn't set indicates that the user defined a reference
+			but no used to define the view declaration, this way pgModeler will consider these
+			references as View definition expressions and will force the insertion them as
+			Reference::SQL_VIEW_DEFINITION.
+
+		This process can raise errors because if the user defined more than one reference the view
+		cannot accept the two as it's SQL definition, also the defined references MUST be expressions in
+		order to be used as view definition */
+		if(!refs.empty() && !refs_in_expr)
+		{
+			vector<Reference>::iterator itr;
+
+			itr=refs.begin();
+			while(itr!=refs.end())
+			{
+			 view->addReference(*itr, Reference::SQL_VIEW_DEFINITION);
+			 itr++;
+			}
 		}
 	}
 	catch(Exception &e)
@@ -5013,6 +5049,7 @@ BaseRelationship *DatabaseModel::createRelationship(void)
 			if(!attribs[ParsersAttributes::TABLE_NAME].isEmpty())
 				rel->setTableNameRelNN(attribs[ParsersAttributes::TABLE_NAME]);
 
+			rel->setName(attribs[ParsersAttributes::NAME]);
 			base_rel=rel;
 		}
 
@@ -5123,11 +5160,13 @@ Permission *DatabaseModel::createPermission(void)
 	QString parent_name, obj_name;
 	QStringList list;
 	unsigned i, len, priv_type=Permission::PRIV_SELECT;
-	bool priv_value, grant_op;
+	bool priv_value, grant_op, revoke, cascade;
 
 	try
 	{
 		XMLParser::getElementAttributes(priv_attribs);
+		revoke=priv_attribs[ParsersAttributes::REVOKE]==ParsersAttributes::_TRUE_;
+		cascade=priv_attribs[ParsersAttributes::CASCADE]==ParsersAttributes::_TRUE_;
 
 		XMLParser::savePosition();
 		XMLParser::accessElement(XMLParser::CHILD_ELEMENT);
@@ -5160,6 +5199,8 @@ Permission *DatabaseModel::createPermission(void)
 											ERR_PERM_REF_INEXIST_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 		perm=new Permission(object);
+		perm->setRevoke(revoke);
+		perm->setCascade(cascade);
 
 		do
 		{
