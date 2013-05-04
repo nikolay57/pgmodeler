@@ -46,10 +46,6 @@ class ModelWidget: public QWidget {
 		//! \brief Indicates if the model was modified by some operation
 		bool modified;
 
-		/*! \brief Return if the object is a reserverd one. A reserved object is the "public"
-		schema or the languages C, plpgsql and SQL. */
-		bool isReservedObject(BaseObject *obj);
-
 		//! \brief Configures the submenu related to the object
 		void configureSubmenu(BaseObject *obj);
 
@@ -184,6 +180,9 @@ class ModelWidget: public QWidget {
 		//! \brief Returns the reference database model
 		DatabaseModel *getDatabaseModel(void);
 
+		//! \brief Returns the operation list used by database model
+		OperationList *getOperationList(void);
+
 	private slots:
 		/*! \brief Os slots manipular*() gerenciam os sinais enviados pela cena e modelo para execução
 		 de operações adicionais como incluir objetos modificados na lista de operações, criar
@@ -289,6 +288,7 @@ class ModelWidget: public QWidget {
 		friend class OperationListWidget;
 		friend class ModelObjectsWidget;
 		friend class ModelOverviewWidget;
+		friend class ExportHelper;
 };
 
 #endif

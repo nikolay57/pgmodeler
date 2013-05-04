@@ -10,28 +10,37 @@ $sp
 
 %if @{base} %then
  $br
- $tb $tb [ internal-length=] "@{internal-length}"
+ [ internal-length=] "@{internal-length}"
  [ by-value=] %if @{by-value} %then "true" %else "false" %end
  $br
 
- $tb $tb [ alignment=] "@{alignment}"
+ [ alignment=] "@{alignment}"
  [ storage=] "@{storage}"
  $br
 
- %if @{element} %then $tb $tb [ element=] "@{element}" %end
- %if @{delimiter} %then [ delimiter=] "@{delimiter}" %end
+ %if @{element} %then
+  [ element=] "@{element}"
+ %end
+
+ %if @{delimiter} %then
+  [ delimiter=] "@{delimiter}"
+ %end
  $br
 
  %if @{default-value} %then
-  $tb $tb [ default-value=] "@{default-value}"
+  [ default-value=] "@{default-value}"
  %end
 
  %if @{category} %then
-  $tb $tb [ category=] "@{category}"
+  [ category=] "@{category}"
  %end
 
  %if @{preferred} %then 
-  $tb $tb [ preferred=] "true"
+  [ preferred=] "true"
+ %end
+
+ %if @{collatable} %then
+  [ collatable=] "true"
  %end
 %end
 
@@ -39,6 +48,10 @@ $sp
  %if @{protected} %then 
   [ protected=] "true"
  %end
+
+  %if @{sql-disabled} %then
+   [ sql-disabled=] "true"
+  %end
 
  > $br
 
@@ -52,11 +65,23 @@ $sp
    %end
  %end
 
- %if @{elements} %then  @{elements} %end
+ %if @{typeattrib} %then  @{typeattrib} %end
+
+ 
+ %if @{range} %then
+    %if @{subtype} %then
+     $tb [<type name=] "@{subtype}"/> $br
+    %end
+
+    %if @{collation} %then @{collation} %end
+    %if @{opclass} %then $tb @{opclass} %end
+    %if @{canonical} %then @{canonical} %end
+    %if @{subtypediff} %then @{subtypediff} %end
+ %end
  
  %if @{base} %then  
    %if @{like-type} %then
-     [<type name=] "@{like-type}" /> $br
+     $tb [<type name=] "@{like-type}" /> $br
    %end
 
    %if @{input} %then @{input} %end 

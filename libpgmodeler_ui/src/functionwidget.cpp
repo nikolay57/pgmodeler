@@ -28,6 +28,7 @@ FunctionWidget::FunctionWidget(QWidget *parent): BaseObjectWidget(parent, OBJ_FU
 		QStringList types;
 		QGridLayout *grid=NULL, *grid1=NULL;
 		map<QString, vector<QWidget *> > fields_map;
+		map<QWidget *, vector<QString> > value_map;
 		QFrame *frame=NULL;
 
 		Ui_FunctionWidget::setupUi(this);
@@ -71,9 +72,10 @@ FunctionWidget::FunctionWidget(QWidget *parent): BaseObjectWidget(parent, OBJ_FU
 		ret_table_gb->setLayout(grid1);
 		ret_table_gb->setVisible(false);
 
-		fields_map[generateVersionsInterval(AFTER_VERSION, SchemaParser::PGSQL_VERSION_84)].push_back(table_rb);
-		fields_map[generateVersionsInterval(AFTER_VERSION, SchemaParser::PGSQL_VERSION_84)].push_back(window_func_lbl);
-		frame=generateVersionWarningFrame(fields_map);
+		fields_map[generateVersionsInterval(AFTER_VERSION, SchemaParser::PGSQL_VERSION_92)].push_back(func_type_lbl);
+		value_map[func_type_lbl].push_back(~FunctionType(FunctionType::leakproof));
+		value_map[func_type_lbl].push_back(~FunctionType(FunctionType::not_leakproof));
+		frame=generateVersionWarningFrame(fields_map, &value_map);
 		grid->addWidget(frame, grid->count()+1, 0, 1, 0);
 		frame->setParent(func_config_twg->widget(0));
 
@@ -97,6 +99,12 @@ FunctionWidget::FunctionWidget(QWidget *parent): BaseObjectWidget(parent, OBJ_FU
 		connect(parameters_tab, SIGNAL(s_rowEdited(int)), this, SLOT(showParameterForm()));
 		connect(return_tab, SIGNAL(s_rowAdded(int)), this, SLOT(showParameterForm()));
 		connect(return_tab, SIGNAL(s_rowEdited(int)), this, SLOT(showParameterForm()));
+
+		setRequiredField(language_lbl);
+		setRequiredField(ret_method_lbl);
+		setRequiredField(symbol_lbl);
+		setRequiredField(library_lbl);
+		setRequiredField(sourc_code_lbl);
 	}
 	catch(Exception &e)
 	{
@@ -441,7 +449,7 @@ void FunctionWidget::validateConfiguredFunction(void)
 				else if(types[i]==OBJ_OPERATOR)
 				{
 					oper=dynamic_cast<Operator *>(object);
-					for(i1=Operator::FUNC_OPERATOR; i1 <= Operator::FUNC_RESTRICTION; i1++)
+					for(i1=Operator::FUNC_OPERATOR; i1 <= Operator::FUNC_RESTRICT; i1++)
 					{
 						if(oper->getFunction(i1)==func)
 							oper->setFunction(func, i1);

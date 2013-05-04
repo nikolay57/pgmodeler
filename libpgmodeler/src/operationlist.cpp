@@ -18,121 +18,6 @@
 
 #include "operationlist.h"
 
-template <class Classe>
-void copyObject(BaseObject **psrc_obj, Classe *copy_obj)
-{
-	Classe *orig_obj=NULL;
-
-	//Gets the objects stored in the pointer
-	orig_obj=dynamic_cast<Classe *>(*psrc_obj);
-
-	//Raises an error if the copy object is not allocated
-	if(!copy_obj)
-		throw Exception(ERR_ASG_NOT_ALOC_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-
-	//Allocates the source object if its not allocated
-	if(!orig_obj)
-	{
-		orig_obj=new Classe;
-		(*psrc_obj)=orig_obj;
-	}
-
-	//Makes the copy between the objects
-	(*orig_obj)=(*copy_obj);
-}
-
-void copyObject(BaseObject **psrc_obj, BaseObject *copy_obj, ObjectType obj_type)
-{
-	switch(obj_type)
-	{
-		case OBJ_RELATIONSHIP:
-			Relationship *rel1;
-			rel1=new Relationship(dynamic_cast<Relationship *>(copy_obj));
-			if(!(*psrc_obj))
-				(*psrc_obj)=rel1;
-			else
-				(*(dynamic_cast<Relationship *>(*psrc_obj)))=(*rel1);
-		break;
-		case BASE_RELATIONSHIP:
-			BaseRelationship *rel;
-			rel=new BaseRelationship(dynamic_cast<BaseRelationship *>(copy_obj));
-			if(!(*psrc_obj))
-				(*psrc_obj)=rel;
-			else
-				(*(dynamic_cast<BaseRelationship *>(*psrc_obj)))=(*rel);
-		break;
-		case OBJ_COLUMN:
-			copyObject(psrc_obj, dynamic_cast<Column *>(copy_obj));
-		break;
-		case OBJ_CONSTRAINT:
-			copyObject(psrc_obj, dynamic_cast<Constraint *>(copy_obj));
-		break;
-		case OBJ_TRIGGER:
-			copyObject(psrc_obj, dynamic_cast<Trigger *>(copy_obj));
-		break;
-		case OBJ_RULE:
-			copyObject(psrc_obj, dynamic_cast<Rule *>(copy_obj));
-		break;
-		case OBJ_INDEX:
-			copyObject(psrc_obj, dynamic_cast<Index *>(copy_obj));
-		break;
-		case OBJ_TABLE:
-			copyObject(psrc_obj, dynamic_cast<Table *>(copy_obj));
-		break;
-		case OBJ_TEXTBOX:
-			copyObject(psrc_obj, dynamic_cast<Textbox *>(copy_obj));
-		break;
-		case OBJ_OPCLASS:
-			copyObject(psrc_obj, dynamic_cast<OperatorClass *>(copy_obj));
-		break;
-		case OBJ_CONVERSION:
-			copyObject(psrc_obj, dynamic_cast<Conversion *>(copy_obj));
-		break;
-		case OBJ_CAST:
-			copyObject(psrc_obj, dynamic_cast<Cast *>(copy_obj));
-		break;
-		case OBJ_DOMAIN:
-			copyObject(psrc_obj, dynamic_cast<Domain *>(copy_obj));
-		break;
-		case OBJ_TABLESPACE:
-			copyObject(psrc_obj, dynamic_cast<Tablespace *>(copy_obj));
-		break;
-		case OBJ_SCHEMA:
-			copyObject(psrc_obj, dynamic_cast<Schema *>(copy_obj));
-		break;
-		case OBJ_OPFAMILY:
-			copyObject(psrc_obj, dynamic_cast<OperatorFamily *>(copy_obj));
-		break;
-		case OBJ_FUNCTION:
-			copyObject(psrc_obj, dynamic_cast<Function *>(copy_obj));
-		break;
-		case OBJ_AGGREGATE:
-			copyObject(psrc_obj, dynamic_cast<Aggregate *>(copy_obj));
-		break;
-		case OBJ_LANGUAGE:
-			copyObject(psrc_obj, dynamic_cast<Language *>(copy_obj));
-		break;
-		case OBJ_OPERATOR:
-			copyObject(psrc_obj, dynamic_cast<Operator *>(copy_obj));
-		break;
-		case OBJ_ROLE:
-			copyObject(psrc_obj, dynamic_cast<Role *>(copy_obj));
-		break;
-		case OBJ_SEQUENCE:
-			copyObject(psrc_obj, dynamic_cast<Sequence *>(copy_obj));
-		break;
-		case OBJ_TYPE:
-			copyObject(psrc_obj, dynamic_cast<Type *>(copy_obj));
-		break;
-		case OBJ_VIEW:
-			copyObject(psrc_obj, dynamic_cast<View *>(copy_obj));
-		break;
-		default:
-			throw Exception(ERR_OPR_OBJ_INV_TYPE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-		break;
-	}
-}
-
 unsigned OperationList::max_size=500;
 
 OperationList::OperationList(DatabaseModel *model)
@@ -248,41 +133,48 @@ void OperationList::addToPool(BaseObject *object, unsigned op_type)
 {
 	ObjectType obj_type;
 
-	//Raises an error if the object to be added is not allocated
-	if(!object)
-		throw Exception(ERR_ASG_NOT_ALOC_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-
-	obj_type=object->getObjectType();
-
-	//Stores a copy of the object if its about to be moved or modified
-	if(op_type==Operation::OBJECT_MODIFIED ||
-		 op_type==Operation::OBJECT_MOVED)
+	try
 	{
-		BaseObject *copy_obj=NULL;
 
-		if(obj_type!=BASE_OBJECT && obj_type!=OBJ_DATABASE)
-			copyObject(&copy_obj, object, obj_type);
-		else
-			throw Exception(ERR_ASG_OBJECT_INV_TYPE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-
-		//Raises an error if the copy fails (returning a null object)
-		if(!copy_obj)
+		//Raises an error if the object to be added is not allocated
+		if(!object)
 			throw Exception(ERR_ASG_NOT_ALOC_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+
+		obj_type=object->getObjectType();
+
+		//Stores a copy of the object if its about to be moved or modified
+		if(op_type==Operation::OBJECT_MODIFIED ||
+			 op_type==Operation::OBJECT_MOVED)
+		{
+			BaseObject *copy_obj=NULL;
+
+			if(obj_type!=BASE_OBJECT && obj_type!=OBJ_DATABASE)
+				PgModeler::copyObject(&copy_obj, object, obj_type);
+			else
+				throw Exception(ERR_ASG_OBJECT_INV_TYPE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+
+			//Raises an error if the copy fails (returning a null object)
+			if(!copy_obj)
+				throw Exception(ERR_ASG_NOT_ALOC_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+			else
+				//Inserts the copy on the pool
+				object_pool.push_back(copy_obj);
+		}
 		else
-			//Inserts the copy on the pool
-			object_pool.push_back(copy_obj);
-		//object=copy_obj;
+			//Inserts the original object on the pool (in case of adition or deletion operations)
+			object_pool.push_back(object);
 	}
-	else
-		//Inserts the original object on the pool (in case of adition or deletion operations)
-		object_pool.push_back(object);
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(),e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__,&e);
+	}
 }
 
 void OperationList::removeOperations(void)
 {
 	BaseObject *object=NULL;
 	TableObject *tab_obj=NULL;
-	Table *tab=NULL;
+	BaseTable *tab=NULL;
 
 	//Destroy the operations
 	while(!operations.empty())
@@ -312,7 +204,7 @@ void OperationList::removeOperations(void)
 		}
 		else if(tab_obj && unallocated_objs.count(tab_obj)==0)
 		{
-			tab=dynamic_cast<Table *>(tab_obj->getParentTable());
+			tab=dynamic_cast<BaseTable *>(tab_obj->getParentTable());
 
 			//Deletes the object if its not unallocated already or referenced by some table
 			if(!tab ||
@@ -402,8 +294,10 @@ void OperationList::registerObject(BaseObject *object, unsigned op_type, int obj
 {
 	ObjectType obj_type;
 	Operation *operation=NULL;
-	Table *parent_tab=NULL;
+	BaseTable *parent_tab=NULL;
 	Relationship *parent_rel=NULL;
+	TableObject *tab_obj=NULL;
+	tab_obj=dynamic_cast<TableObject *>(object);
 	int obj_idx=-1;
 
 	try
@@ -413,17 +307,16 @@ void OperationList::registerObject(BaseObject *object, unsigned op_type, int obj
 			throw Exception(ERR_ASG_NOT_ALOC_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 		obj_type=object->getObjectType();
-		if((obj_type==OBJ_COLUMN || obj_type==OBJ_CONSTRAINT ||
-				obj_type==OBJ_INDEX || obj_type==OBJ_TRIGGER ||
-				obj_type==OBJ_RULE) && !parent_obj)
+		if(tab_obj && !parent_obj)
 			throw Exception(ERR_OPR_NOT_ALOC_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 		else if(parent_obj &&
 						(((obj_type==OBJ_COLUMN || obj_type==OBJ_CONSTRAINT) &&
 							(parent_obj->getObjectType()!=OBJ_RELATIONSHIP && parent_obj->getObjectType()!=OBJ_TABLE)) ||
 
-						 ((obj_type==OBJ_INDEX || obj_type==OBJ_TRIGGER || obj_type==OBJ_RULE) &&
-							parent_obj->getObjectType()!=OBJ_TABLE)))
+						 ((obj_type==OBJ_TRIGGER || obj_type==OBJ_RULE) && !dynamic_cast<BaseTable *>(parent_obj)) ||
+
+						 (obj_type==OBJ_INDEX && parent_obj->getObjectType()!=OBJ_TABLE)))
 			throw Exception(ERR_OPR_OBJ_INV_TYPE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 		//If the operations list is full makes the automatic cleaning before inserting a new operation
@@ -462,6 +355,10 @@ void OperationList::registerObject(BaseObject *object, unsigned op_type, int obj
 		//Assigns the pool object to the operation
 		operation->pool_obj=object_pool.back();
 
+		//Stores the object's permission befor its removal
+		if(op_type==Operation::OBJECT_REMOVED)
+			model->getPermissions(object, operation->permissions);
+
 		if(next_op_chain==Operation::CHAIN_START)
 			next_op_chain=Operation::CHAIN_MIDDLE;
 
@@ -469,30 +366,26 @@ void OperationList::registerObject(BaseObject *object, unsigned op_type, int obj
 		 If the object has a parent object, it must be discovered
 		 and moreover it is necessary to find and store the index of the object
 		 in the list on the parent object */
-		if(obj_type==OBJ_COLUMN || obj_type==OBJ_CONSTRAINT ||
-			 obj_type==OBJ_INDEX || obj_type==OBJ_TRIGGER ||
-			 obj_type==OBJ_RULE)
+		if(tab_obj)
 		{
-			TableObject *tab_obj=NULL;
-			tab_obj=dynamic_cast<TableObject *>(object);
-
-			if(parent_obj->getObjectType()==OBJ_TABLE)
-				parent_tab=dynamic_cast<Table *>(parent_obj);
-			else
+			if(parent_obj->getObjectType()==OBJ_RELATIONSHIP)
 				parent_rel=dynamic_cast<Relationship *>(parent_obj);
+			else
+				parent_tab=dynamic_cast<BaseTable *>(parent_obj);
 
 			/* Specific case to columns: on removal operations the permissions of the objects
 			must be removed too */
-			if(obj_type==OBJ_COLUMN && op_type==Operation::OBJECT_REMOVED)
-				model->removePermissions(tab_obj);
-			else if(((obj_type==OBJ_TRIGGER && dynamic_cast<Trigger *>(tab_obj)->isReferRelationshipAddedColumn()) ||
+			//if(obj_type==OBJ_COLUMN && op_type==Operation::OBJECT_REMOVED)
+				//model->removePermissions(tab_obj);
+			//else
+				if(((obj_type==OBJ_TRIGGER && dynamic_cast<Trigger *>(tab_obj)->isReferRelationshipAddedColumn()) ||
 							 (obj_type==OBJ_INDEX && dynamic_cast<Index *>(tab_obj)->isReferRelationshipAddedColumn()) ||
 							 (obj_type==OBJ_CONSTRAINT && dynamic_cast<Constraint *>(tab_obj)->isReferRelationshipAddedColumn())))
 			{
 				if(op_type==Operation::OBJECT_REMOVED)
 					tab_obj->setParentTable(parent_tab);
 
-				operation->xml_definition=model->validateObjectDefinition(tab_obj, SchemaParser::XML_DEFINITION);
+				operation->xml_definition=tab_obj->getCodeDefinition(SchemaParser::XML_DEFINITION);
 			}
 
 			operation->parent_obj=parent_obj;
@@ -744,23 +637,23 @@ void OperationList::executeOperation(Operation *oper, bool redo)
 	{
 		BaseObject *orig_obj=NULL, *bkp_obj=NULL, *object=NULL, *aux_obj=NULL;
 		ObjectType obj_type;
-		Table *parent_tab=NULL;
+		BaseTable *parent_tab=NULL;
 		Relationship *parent_rel=NULL;
 
 		object=oper->pool_obj;
 		obj_type=object->getObjectType();
 
 		/* Converting the parent object, if any, to the correct class according
-			to the type of the parent object. If OBJ_TABLE, the pointer
-			'parent_tab' get the reference to table and will be used as referential
+			to the type of the parent object. If OBJ_TABLE|OBJ_VIEW, the pointer
+			'parent_tab' get the reference to table/view and will be used as referential
 			in the operations below. If the parent object is a relationship, the pointer
 					'parent_rel' get the reference to the relationship */
 		if(oper->parent_obj)
 		{
-			if(oper->parent_obj->getObjectType()==OBJ_TABLE)
-				parent_tab=dynamic_cast<Table *>(oper->parent_obj);
-			else
+			if(oper->parent_obj->getObjectType()==OBJ_RELATIONSHIP)
 				parent_rel=dynamic_cast<Relationship *>(oper->parent_obj);
+			else
+				parent_tab=dynamic_cast<BaseTable *>(oper->parent_obj);
 		}
 
 		/* If the XML definition of object is set indicates that it is referencing a column
@@ -778,7 +671,7 @@ void OperationList::executeOperation(Operation *oper, bool redo)
 			if(obj_type==OBJ_TRIGGER)
 				aux_obj=model->createTrigger(parent_tab);
 			else if(obj_type==OBJ_INDEX)
-				aux_obj=model->createIndex(parent_tab);
+				aux_obj=model->createIndex(dynamic_cast<Table *>(parent_tab));
 			else if(obj_type==OBJ_CONSTRAINT)
 				aux_obj=model->createConstraint(oper->parent_obj);
 			else if(obj_type==OBJ_SEQUENCE)
@@ -809,19 +702,19 @@ void OperationList::executeOperation(Operation *oper, bool redo)
 				orig_obj=model->getObject(oper->object_idx, obj_type);
 
 			if(aux_obj)
-				oper->xml_definition=model->validateObjectDefinition(orig_obj, SchemaParser::SQL_DEFINITION);
+				oper->xml_definition=orig_obj->getCodeDefinition(SchemaParser::XML_DEFINITION);
 
 			/* The original object (obtained from the table, relationship or model) will have its
 				previous values restored with the existing copy on the pool. After restoring the object
 				on the pool will have the same attributes as the object before being restored
 				to enable redo operations */
-			copyObject(reinterpret_cast<BaseObject **>(&bkp_obj), orig_obj, obj_type);
-			copyObject(reinterpret_cast<BaseObject **>(&orig_obj), object, obj_type);
-			copyObject(reinterpret_cast<BaseObject **>(&object), bkp_obj, obj_type);
+			PgModeler::copyObject(reinterpret_cast<BaseObject **>(&bkp_obj), orig_obj, obj_type);
+			PgModeler::copyObject(reinterpret_cast<BaseObject **>(&orig_obj), object, obj_type);
+			PgModeler::copyObject(reinterpret_cast<BaseObject **>(&object), bkp_obj, obj_type);
 			object=orig_obj;
 
 			if(aux_obj)
-				copyObject(reinterpret_cast<BaseObject **>(&object), aux_obj, obj_type);
+				PgModeler::copyObject(reinterpret_cast<BaseObject **>(&object), aux_obj, obj_type);
 		}
 
 		/* If the operation is of object removed and is not a redo, or
@@ -832,7 +725,7 @@ void OperationList::executeOperation(Operation *oper, bool redo)
 						(oper->op_type==Operation::OBJECT_CREATED && redo))
 		{
 			if(aux_obj)
-				copyObject(reinterpret_cast<BaseObject **>(&object), aux_obj, obj_type);
+				PgModeler::copyObject(reinterpret_cast<BaseObject **>(&object), aux_obj, obj_type);
 
 			if(parent_tab)
 			{
@@ -840,7 +733,7 @@ void OperationList::executeOperation(Operation *oper, bool redo)
 
 				if(object->getObjectType()==OBJ_CONSTRAINT &&
 					 dynamic_cast<Constraint *>(object)->getConstraintType()==ConstraintType::foreign_key)
-					model->updateTableFKRelationships(parent_tab);
+					model->updateTableFKRelationships(dynamic_cast<Table *>(parent_tab));
 			}
 			else if(parent_rel)
 				parent_rel->addObject(dynamic_cast<TableObject *>(object), oper->object_idx);
@@ -848,6 +741,9 @@ void OperationList::executeOperation(Operation *oper, bool redo)
 				if(dynamic_cast<Table *>(object))
 					dynamic_cast<Table *>(object)->getCodeDefinition(SchemaParser::SQL_DEFINITION);
 			model->addObject(object, oper->object_idx);
+
+			if(oper->op_type==Operation::OBJECT_REMOVED)
+				model->addPermissions(oper->permissions);
 		}
 		/* If the operation is a previously created object or if the object
 			was removed and wants to redo the operation it'll be
@@ -871,17 +767,17 @@ void OperationList::executeOperation(Operation *oper, bool redo)
 			if(parent_tab)
 				parent_tab->setModified(true);
 			else
-				parent_rel->setModified(true);
+				parent_rel->forceInvalidate();
 
 			if(parent_tab &&
 				 (object->getObjectType()==OBJ_COLUMN ||
 					object->getObjectType()==OBJ_CONSTRAINT))
 			{
-				model->validateRelationships(dynamic_cast<TableObject *>(object), parent_tab);
+				model->validateRelationships(dynamic_cast<TableObject *>(object), dynamic_cast<Table *>(parent_tab));
 
 				if(object->getObjectType()==OBJ_CONSTRAINT &&
 					 dynamic_cast<Constraint *>(object)->getConstraintType()==ConstraintType::foreign_key)
-					model->updateTableFKRelationships(parent_tab);
+					model->updateTableFKRelationships(dynamic_cast<Table *>(parent_tab));
 			}
 			else if(parent_rel)
 				model->validateRelationships();

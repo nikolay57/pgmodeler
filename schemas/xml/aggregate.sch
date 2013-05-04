@@ -11,6 +11,10 @@
   [ protected=] "true"
  %end
 
+  %if @{sql-disabled} %then
+   [ sql-disabled=] "true"
+  %end
+
 > $br
   @{schema}
   %if @{owner} %then @{owner} %end
@@ -20,4 +24,5 @@
   @{state-type}
   @{transition}
   %if @{final} %then @{final} %end
+  %if @{sort-op} %then @{sort-op} %end
 </aggregate>  $br $br

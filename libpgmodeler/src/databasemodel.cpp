@@ -23,8 +23,9 @@ unsigned DatabaseModel::dbmodel_id=20000;
 DatabaseModel::DatabaseModel(void)
 {
 	object_id=DatabaseModel::dbmodel_id++;
-
 	obj_type=OBJ_DATABASE;
+
+	encoding=BaseType::null;
 	BaseObject::setName(QObject::trUtf8("new_database").toUtf8());
 
 	conn_limit=-1;
@@ -32,8 +33,8 @@ DatabaseModel::DatabaseModel(void)
 	attributes[ParsersAttributes::ENCODING]="";
 	attributes[ParsersAttributes::TEMPLATE_DB]="";
 	attributes[ParsersAttributes::CONN_LIMIT]="";
-	attributes[ParsersAttributes::LC_COLLATE_DB]="";
-	attributes[ParsersAttributes::LC_CTYPE_DB]="";
+	attributes[ParsersAttributes::_LC_COLLATE_]="";
+	attributes[ParsersAttributes::_LC_CTYPE_]="";
 }
 
 DatabaseModel::~DatabaseModel(void)
@@ -49,17 +50,18 @@ void DatabaseModel::setEncoding(EncodingType encod)
 
 void DatabaseModel::setLocalization(int localiz_id, const QString &value)
 {
-	unsigned idx=0;
-
 	switch(localiz_id)
 	{
-		case LC_CTYPE: idx=0; break;
+		case LC_CTYPE:
+			localizations[0]=value;
+		break;
 		case LC_COLLATE:
+			localizations[1]=value;
+		break;
 		default:
-			idx=1;
+			throw Exception(ERR_REF_ELEM_INV_INDEX,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 		break;
 	}
-	localizations[idx]=value;
 }
 
 void DatabaseModel::setConnectionLimit(int conn_lim)
@@ -123,41 +125,12 @@ vector<BaseObject *> *DatabaseModel::getObjectList(ObjectType obj_type)
 		return(&relationships);
 	else if(obj_type==OBJ_PERMISSION)
 		return(&permissions);
+	else if(obj_type==OBJ_COLLATION)
+		return(&collations);
+	else if(obj_type==OBJ_EXTENSION)
+		return(&extensions);
 	else
 		return(NULL);
-}
-
-QString DatabaseModel::validateObjectDefinition(BaseObject *object, unsigned def_type)
-{
-	ObjectType obj_type;
-	QString obj_def;
-
-	if(object)
-	{
-		try
-		{
-			obj_type=object->getObjectType();
-
-			if(obj_type==BASE_RELATIONSHIP && def_type==SchemaParser::XML_DEFINITION)
-				obj_def=dynamic_cast<BaseRelationship *>(object)->getCodeDefinition();
-			else if(obj_type==OBJ_TEXTBOX && def_type==SchemaParser::XML_DEFINITION)
-				obj_def=dynamic_cast<Textbox *>(object)->getCodeDefinition();
-			else
-				obj_def=object->getCodeDefinition(def_type);
-		}
-		catch(Exception &e)
-		{
-			if(e.getErrorType()==ERR_UNDEF_ATTRIB_VALUE)
-				throw Exception(Exception::getErrorMessage(ERR_ASG_OBJ_INV_DEFINITION)
-												.arg(Utf8String::create(object->getName(true)))
-												.arg(object->getTypeName()),
-												ERR_ASG_OBJ_INV_DEFINITION,__PRETTY_FUNCTION__,__FILE__,__LINE__,&e);
-			else
-				throw Exception(e.getErrorMessage(),e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__,&e);
-		}
-	}
-
-	return(obj_def);
 }
 
 void DatabaseModel::addObject(BaseObject *object, int obj_idx)
@@ -207,6 +180,10 @@ void DatabaseModel::addObject(BaseObject *object, int obj_idx)
 				addDomain(dynamic_cast<Domain *>(object), obj_idx);
 			else if(obj_type==OBJ_SEQUENCE)
 				addSequence(dynamic_cast<Sequence *>(object), obj_idx);
+			else if(obj_type==OBJ_COLLATION)
+				addCollation(dynamic_cast<Collation *>(object), obj_idx);
+			else if(obj_type==OBJ_EXTENSION)
+				addExtension(dynamic_cast<Extension *>(object), obj_idx);
 			else if(obj_type==OBJ_PERMISSION)
 				addPermission(dynamic_cast<Permission *>(object));
 		}
@@ -265,6 +242,8 @@ void DatabaseModel::removeObject(BaseObject *object, int obj_idx)
 				removeDomain(dynamic_cast<Domain *>(object), obj_idx);
 			else if(obj_type==OBJ_SEQUENCE)
 				removeSequence(dynamic_cast<Sequence *>(object), obj_idx);
+			else if(obj_type==OBJ_COLLATION)
+				removeCollation(dynamic_cast<Collation *>(object), obj_idx);
 			else if(obj_type==OBJ_PERMISSION)
 				removePermission(dynamic_cast<Permission *>(object));
 		}
@@ -328,6 +307,8 @@ void DatabaseModel::removeObject(unsigned obj_idx, ObjectType obj_type)
 			removeDomain(dynamic_cast<Domain *>(object), obj_idx);
 		else if(obj_type==OBJ_SEQUENCE)
 			removeSequence(dynamic_cast<Sequence *>(object), obj_idx);
+		else if(obj_type==OBJ_COLLATION)
+			removeCollation(dynamic_cast<Collation *>(object), obj_idx);
 		else if(obj_type==OBJ_RELATIONSHIP || obj_type==BASE_RELATIONSHIP)
 			removeRelationship(dynamic_cast<BaseRelationship *>(object), obj_idx);
 		else if(obj_type==OBJ_PERMISSION)
@@ -375,10 +356,14 @@ void DatabaseModel::__addObject(BaseObject *object, int obj_idx)
 		}
 	}
 
-	//Raises an error if there is an object with the same name
-	if((obj_type!=OBJ_FUNCTION && getObject(object->getName(true), obj_type, idx)) ||
-		 (obj_type==OBJ_FUNCTION &&
-			getObject(dynamic_cast<Function *>(object)->getSignature(), obj_type, idx)))
+	/* Raises an error if there is an object with the same name.
+		 Special cases are for: functions/operator that are search by signature and views
+		 that are search on tables and views list */
+	if((obj_type==OBJ_VIEW &&	(getObject(object->getName(true), obj_type, idx) ||
+														 getObject(object->getName(true), OBJ_TABLE, idx))) ||
+		 (obj_type==OBJ_FUNCTION &&	getObject(dynamic_cast<Function *>(object)->getSignature(), obj_type, idx)) ||
+		 (obj_type==OBJ_OPERATOR &&	getObject(dynamic_cast<Operator *>(object)->getSignature(), obj_type, idx)) ||
+		 (obj_type!=OBJ_FUNCTION && getObject(object->getName(true), obj_type, idx)))
 	{
 		QString str_aux;
 
@@ -393,7 +378,10 @@ void DatabaseModel::__addObject(BaseObject *object, int obj_idx)
 
 	try
 	{
-		DatabaseModel::validateObjectDefinition(object, SchemaParser::SQL_DEFINITION);
+		if(obj_type==OBJ_TEXTBOX || obj_type==BASE_RELATIONSHIP)
+			object->getCodeDefinition(SchemaParser::XML_DEFINITION);
+		else
+			object->getCodeDefinition(SchemaParser::SQL_DEFINITION);
 	}
 	catch(Exception &e)
 	{
@@ -439,6 +427,43 @@ void DatabaseModel::__removeObject(BaseObject *object, int obj_idx)
 			throw Exception(ERR_OBT_OBJ_INVALID_TYPE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 		else
 		{
+			vector<BaseObject *> refs;
+
+			//Get the table references
+			getObjectReferences(object, refs, true);
+
+			//If there are objects referencing the table
+			if(!refs.empty())
+			{
+				ErrorType err_type;
+
+				//Raises an error indicating the object that is referencing the table
+				if(!dynamic_cast<TableObject *>(refs[0]))
+				{
+					err_type=ERR_REM_DIRECT_REFERENCE;
+					throw Exception(QString(Exception::getErrorMessage(err_type))
+													.arg(Utf8String::create(object->getName(true)))
+													.arg(Utf8String::create(object->getTypeName()))
+													.arg(Utf8String::create(refs[0]->getName(true)))
+							.arg(Utf8String::create(refs[0]->getTypeName())),
+							err_type,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+				}
+				else
+				{
+					BaseObject *ref_obj_parent=dynamic_cast<TableObject *>(refs[0])->getParentTable();
+
+					err_type=ERR_REM_INDIRECT_REFERENCE;
+					throw Exception(QString(Exception::getErrorMessage(err_type))
+													.arg(Utf8String::create(object->getName(true)))
+													.arg(Utf8String::create(object->getTypeName()))
+													.arg(Utf8String::create(refs[0]->getName(true)))
+							.arg(Utf8String::create(refs[0]->getTypeName()))
+							.arg(Utf8String::create(ref_obj_parent->getName(true)))
+							.arg(Utf8String::create(ref_obj_parent->getTypeName())),
+							err_type,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+				}
+			}
+
 			if(obj_idx < 0)
 			{
 				if(obj_type!=OBJ_FUNCTION && obj_type!=OBJ_OPERATOR)
@@ -595,17 +620,17 @@ unsigned DatabaseModel::getObjectCount(void)
 
 QString DatabaseModel::getLocalization(int localiz_id)
 {
-	unsigned idx=0;
-
 	switch(localiz_id)
 	{
-		case LC_CTYPE: idx=0; break;
+		case LC_CTYPE:
+			return(localizations[0]);
+		break;
 		case LC_COLLATE:
+			return(localizations[1]);
 		default:
-			idx=1;
+			throw Exception(ERR_REF_ELEM_INV_INDEX,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 		break;
 	}
-	return(localizations[idx]);
 }
 
 int DatabaseModel::getConnectionLimit(void)
@@ -668,8 +693,9 @@ void DatabaseModel::destroyObjects(void)
 		OBJ_SEQUENCE, OBJ_CONVERSION,
 		OBJ_CAST, OBJ_OPFAMILY, OBJ_OPCLASS,
 		BASE_RELATIONSHIP, OBJ_TEXTBOX,
-		OBJ_DOMAIN, OBJ_TYPE, OBJ_FUNCTION, OBJ_SCHEMA,
-		OBJ_LANGUAGE, OBJ_TABLESPACE, OBJ_ROLE, OBJ_PERMISSION };
+		OBJ_DOMAIN, OBJ_TYPE, OBJ_FUNCTION,
+		OBJ_LANGUAGE, OBJ_TABLESPACE, OBJ_ROLE, OBJ_COLLATION,
+		OBJ_EXTENSION, OBJ_SCHEMA, OBJ_PERMISSION };
 	vector<BaseObject *> *list=NULL;
 	BaseObject *object=NULL;
 	unsigned i, cnt=sizeof(types)/sizeof(ObjectType);
@@ -718,60 +744,15 @@ Table *DatabaseModel::getTable(unsigned obj_idx)
 
 void DatabaseModel::removeTable(Table *table, int obj_idx)
 {
-	if(table)
+	try
 	{
-		vector<BaseObject *> refs;
-		QString str_aux;
-
-		//Get the table references
-		getObjectReferences(table, refs, true);
-
-		//If there are objects referencing the table
-		if(!refs.empty())
-		{
-			ErrorType err_type;
-			unsigned i=0, count=refs.size();
-
-			while(i < count)
-			{
-				//Raises an error indicating the object that is referencing the table
-				if(!dynamic_cast<TableObject *>(refs[i]))
-				{
-					err_type=ERR_REM_DIRECT_REFERENCE;
-					str_aux=QString(Exception::getErrorMessage(err_type))
-									.arg(Utf8String::create(table->getName(true)))
-									.arg(Utf8String::create(table->getTypeName()))
-									.arg(Utf8String::create(refs[0]->getName(true)))
-									.arg(Utf8String::create(refs[0]->getTypeName()));
-
-					throw Exception(str_aux, err_type,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-				}
-				else
-				{
-					BaseObject *ref_obj_parent=dynamic_cast<TableObject *>(refs[i])->getParentTable();
-
-					if(ref_obj_parent != table)
-					{
-						err_type=ERR_REM_INDIRECT_REFERENCE;
-						str_aux=QString(Exception::getErrorMessage(err_type))
-										.arg(Utf8String::create(table->getName(true)))
-										.arg(Utf8String::create(table->getTypeName()))
-										.arg(Utf8String::create(refs[0]->getName(true)))
-								.arg(Utf8String::create(refs[0]->getTypeName()))
-								.arg(Utf8String::create(ref_obj_parent->getName(true)))
-								.arg(Utf8String::create(ref_obj_parent->getTypeName()));
-
-						throw Exception(str_aux, err_type,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-					}
-				}
-
-				i++;
-			}
-		}
-
 		__removeObject(table, obj_idx);
 		PgSQLType::removeUserType(table->getName(true), table);
 		updateTableFKRelationships(table);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
@@ -795,26 +776,94 @@ Sequence *DatabaseModel::getSequence(unsigned obj_idx)
 
 void DatabaseModel::removeSequence(Sequence *sequence, int obj_idx)
 {
-	if(sequence)
+	try
 	{
 		removeUserType(sequence, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
+	}
+}
+
+void DatabaseModel::addCollation(Collation *collation, int obj_idx)
+{
+	try
+	{
+		__addObject(collation, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__,&e);
+	}
+}
+
+Collation *DatabaseModel::getCollation(unsigned obj_idx)
+{
+	return(dynamic_cast<Collation *>(getObject(obj_idx, OBJ_COLLATION)));
+}
+
+void DatabaseModel::removeCollation(Collation *collation, int obj_idx)
+{
+	try
+	{
+		__removeObject(collation, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__,&e);
+	}
+}
+
+void DatabaseModel::addExtension(Extension *extension, int obj_idx)
+{
+	try
+	{
+		__addObject(extension, obj_idx);
+
+		if(extension->handlesType())
+			PgSQLType::addUserType(extension->getName(true), extension, this, UserTypeConfig::EXTENSION_TYPE);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__,&e);
+	}
+}
+
+Extension *DatabaseModel::getExtension(unsigned obj_idx)
+{
+	return(dynamic_cast<Extension *>(getObject(obj_idx, OBJ_COLLATION)));
+}
+
+void DatabaseModel::removeExtension(Extension *extension, int obj_idx)
+{
+	try
+	{
+		if(extension->handlesType())
+			removeUserType(extension, obj_idx);
+		else
+			__removeObject(extension, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__,&e);
 	}
 }
 
 void DatabaseModel::addView(View *view, int obj_idx)
 {
-	if(view)
+	try
 	{
-		try
-		{
-			__addObject(view, obj_idx);
-			updateViewRelationships(view);
-			dynamic_cast<Schema *>(view->getSchema())->setModified(true);
-		}
-		catch(Exception &e)
-		{
-			throw Exception(e.getErrorMessage(),e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__,&e);
-		}
+		__addObject(view, obj_idx);
+
+		PgSQLType::addUserType(view->getName(true), view, this, UserTypeConfig::VIEW_TYPE);
+
+		updateViewRelationships(view);
+		dynamic_cast<Schema *>(view->getSchema())->setModified(true);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(),e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__,&e);
 	}
 }
 
@@ -825,13 +874,17 @@ View *DatabaseModel::getView(unsigned obj_idx)
 
 void DatabaseModel::removeView(View *view, int obj_idx)
 {
-	if(view)
+	try
 	{
 		__removeObject(view, obj_idx);
+		PgSQLType::removeUserType(view->getName(true), view);
 		updateViewRelationships(view);
 	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
+	}
 }
-
 
 void DatabaseModel::updateTableFKRelationships(Table *table)
 {
@@ -1155,8 +1208,6 @@ void DatabaseModel::validateRelationships(void)
 					itr_end=rels.end();
 					itr=rels.begin() + idx;
 
-					delete(rel);
-
 					//Stores the error raised in a list
 					errors.push_back(e);
 				}
@@ -1349,6 +1400,7 @@ void DatabaseModel::storeSpecialObjectsXML(void)
 	unsigned count, i, type_id;
 	vector<BaseObject *>::iterator itr, itr_end;
 	Sequence *sequence=NULL;
+	Permission *permission=NULL;
 	Table *table=NULL;
 	TableObject *tab_obj=NULL;
 	Constraint *constr=NULL;
@@ -1473,7 +1525,7 @@ void DatabaseModel::storeSpecialObjectsXML(void)
 
 						if(rel)
 						{
-							xml_special_objs[rel->getObjectId()]=rel->getCodeDefinition();
+							xml_special_objs[rel->getObjectId()]=rel->getCodeDefinition(SchemaParser::XML_DEFINITION);
 							removeRelationship(rel);
 							delete(rel);
 						}
@@ -1482,6 +1534,23 @@ void DatabaseModel::storeSpecialObjectsXML(void)
 
 				removeView(view);
 				delete(view);
+			}
+		}
+
+		itr=permissions.begin();
+		itr_end=permissions.end();
+
+		while(itr!=itr_end)
+		{
+			permission=dynamic_cast<Permission *>(*itr);
+			tab_obj=dynamic_cast<TableObject *>(permission->getObject());
+			itr++;
+
+			if(tab_obj)
+			{
+				xml_special_objs[permission->getObjectId()]=permission->getCodeDefinition(SchemaParser::XML_DEFINITION);
+				removePermission(permission);
+				delete(permission);
 			}
 		}
 	}
@@ -1514,6 +1583,8 @@ void DatabaseModel::createSpecialObject(const QString &xml_def, unsigned obj_id)
 			addSequence(dynamic_cast<Sequence *>(object));
 		else if(obj_type==OBJ_VIEW)
 			addView(dynamic_cast<View *>(object));
+		else if(obj_type==OBJ_PERMISSION)
+			addPermission(createPermission());
 
 		/* When the special object is recreated it receive a new id but to maintain
 		 the correct creation order, the object has its id restored with the passed
@@ -1533,7 +1604,6 @@ void DatabaseModel::addRelationship(BaseRelationship *rel, int obj_idx)
 	{
 		BaseTable *tab1=NULL, *tab2=NULL;
 		QString msg;
-
 
 		if(rel)
 		{
@@ -1674,7 +1744,14 @@ void DatabaseModel::addTextbox(Textbox *txtbox, int obj_idx)
 
 void DatabaseModel::removeTextbox(Textbox *txtbox, int obj_idx)
 {
-	__removeObject(txtbox, obj_idx);
+	try
+	{
+		__removeObject(txtbox, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
+	}
 }
 
 Textbox *DatabaseModel::getTextbox(unsigned obj_idx)
@@ -1701,24 +1778,13 @@ Schema *DatabaseModel::getSchema(unsigned obj_idx)
 
 void DatabaseModel::removeSchema(Schema *schema, int obj_idx)
 {
-	if(schema)
+	try
 	{
-		vector<BaseObject *> refs;
-
-		getObjectReferences(schema, refs, true);
-
-		//Raises an error if there is some object referencing the schema to be removed
-		if(!refs.empty())
-		{
-			throw Exception(QString(Exception::getErrorMessage(ERR_REM_DIRECT_REFERENCE))
-											.arg(schema->getName(true))
-											.arg(schema->getTypeName())
-											.arg(refs[0]->getName(true))
-					.arg(refs[0]->getTypeName()),
-					ERR_REM_DIRECT_REFERENCE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-		}
-
 		__removeObject(schema, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
@@ -1741,24 +1807,13 @@ Role *DatabaseModel::getRole(unsigned obj_idx)
 
 void DatabaseModel::removeRole(Role *role, int obj_idx)
 {
-	if(role)
+	try
 	{
-		vector<BaseObject *> refs;
-
-		getObjectReferences(role, refs, true);
-
-		//Raises an error if there is some object referencing the role to be removed
-		if(!refs.empty())
-		{
-			throw Exception(QString(Exception::getErrorMessage(ERR_REM_DIRECT_REFERENCE))
-											.arg(role->getName(true))
-											.arg(role->getTypeName())
-											.arg(refs[0]->getName(true))
-					.arg(refs[0]->getTypeName()),
-					ERR_REM_DIRECT_REFERENCE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-		}
-
 		__removeObject(role, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
@@ -1781,46 +1836,13 @@ Tablespace *DatabaseModel::getTablespace(unsigned obj_idx)
 
 void DatabaseModel::removeTablespace(Tablespace *tabspc, int obj_idx)
 {
-	if(tabspc)
+	try
 	{
-		vector<BaseObject *> refs;
-		QString str_aux;
-
-		getObjectReferences(tabspc, refs, true);
-
-		//Raises an error if there is some object referencing the tablespace to be removed
-		if(!refs.empty())
-		{
-			ErrorType err_type;
-
-			if(!dynamic_cast<TableObject *>(refs[0]))
-			{
-				err_type=ERR_REM_DIRECT_REFERENCE;
-				str_aux=QString(Exception::getErrorMessage(err_type))
-								.arg(tabspc->getName(true))
-								.arg(tabspc->getTypeName())
-								.arg(refs[0]->getName(true))
-						.arg(refs[0]->getTypeName());
-			}
-			else
-			{
-				BaseObject *ref_obj_parent=dynamic_cast<TableObject *>(refs[0])->getParentTable();
-
-				err_type=ERR_REM_INDIRECT_REFERENCE;
-				str_aux=QString(Exception::getErrorMessage(err_type))
-								.arg(tabspc->getName(true))
-								.arg(tabspc->getTypeName())
-								.arg(refs[0]->getName(true))
-						.arg(refs[0]->getTypeName())
-						.arg(ref_obj_parent->getName(true))
-						.arg(ref_obj_parent->getTypeName());
-
-			}
-
-			throw Exception(str_aux,err_type,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-		}
-
 		__removeObject(tabspc, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
@@ -1838,7 +1860,14 @@ void DatabaseModel::addCast(Cast *cast, int obj_idx)
 
 void DatabaseModel::removeCast(Cast *cast, int obj_idx)
 {
-	__removeObject(cast, obj_idx);
+	try
+	{
+		__removeObject(cast, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
+	}
 }
 
 Cast *DatabaseModel::getCast(unsigned obj_idx)
@@ -1860,7 +1889,14 @@ void DatabaseModel::addConversion(Conversion *conv, int obj_idx)
 
 void DatabaseModel::removeConversion(Conversion *conv, int obj_idx)
 {
-	__removeObject(conv, obj_idx);
+	try
+	{
+		__removeObject(conv, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
+	}
 }
 
 Conversion *DatabaseModel::getConversion(unsigned obj_idx)
@@ -1888,24 +1924,13 @@ Language *DatabaseModel::getLanguage(unsigned obj_idx)
 
 void DatabaseModel::removeLanguage(Language *lang, int obj_idx)
 {
-	if(lang)
+	try
 	{
-		vector<BaseObject *> refs;
-
-		getObjectReferences(lang, refs, true);
-
-		//Raises an error if there is some object referencing the language to be removed
-		if(!refs.empty())
-		{
-			throw Exception(QString(Exception::getErrorMessage(ERR_REM_DIRECT_REFERENCE))
-											.arg(lang->getName(true))
-											.arg(lang->getTypeName())
-											.arg(dynamic_cast<Function *>(refs[0])->getSignature())
-					.arg(refs[0]->getTypeName()),
-					ERR_REM_DIRECT_REFERENCE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-		}
-
 		__removeObject(lang, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
@@ -1928,47 +1953,13 @@ Function *DatabaseModel::getFunction(unsigned obj_idx)
 
 void DatabaseModel::removeFunction(Function *func, int obj_idx)
 {
-	if(func)
+	try
 	{
-		vector<BaseObject *> refs;
-		QString str_aux;
-
-		getObjectReferences(func, refs, true);
-
-		//Raises an error if there is some object referencing the function to be removed
-		if(!refs.empty())
-		{
-			ErrorType err_type;
-
-			if(!dynamic_cast<TableObject *>(refs[0]))
-			{
-				err_type=ERR_REM_DIRECT_REFERENCE;
-				str_aux=QString(Exception::getErrorMessage(ERR_REM_DIRECT_REFERENCE))
-								.arg(func->getSignature())
-								.arg(func->getTypeName())
-								.arg(refs[0]->getName(true))
-						.arg(refs[0]->getTypeName());
-
-			}
-			else
-			{
-				BaseObject *ref_parent_obj=dynamic_cast<TableObject *>(refs[0])->getParentTable();
-
-				err_type=ERR_REM_INDIRECT_REFERENCE;
-				str_aux=QString(Exception::getErrorMessage(ERR_REM_INDIRECT_REFERENCE))
-								.arg(func->getSignature())
-								.arg(func->getTypeName())
-								.arg(refs[0]->getName(true))
-						.arg(refs[0]->getTypeName())
-						.arg(ref_parent_obj->getName(true))
-						.arg(ref_parent_obj->getTypeName());
-
-			}
-
-			throw Exception(str_aux,err_type,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-		}
-
 		__removeObject(func, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
@@ -1991,7 +1982,14 @@ Aggregate *DatabaseModel::getAggregate(unsigned obj_idx)
 
 void DatabaseModel::removeAggregate(Aggregate *aggreg, int obj_idx)
 {
-	__removeObject(aggreg, obj_idx);
+	try
+	{
+		__removeObject(aggreg, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
+	}
 }
 
 void DatabaseModel::addDomain(Domain *domain, int obj_idx)
@@ -2073,23 +2071,13 @@ OperatorFamily *DatabaseModel::getOperatorFamily(unsigned obj_idx)
 
 void DatabaseModel::removeOperatorFamily(OperatorFamily *op_family, int obj_idx)
 {
-	if(op_family)
+	try
 	{
-		vector<BaseObject *> refs;
-
-		getObjectReferences(op_family, refs, true);
-
-		if(!refs.empty())
-		{
-			throw Exception(QString(Exception::getErrorMessage(ERR_REM_DIRECT_REFERENCE))
-											.arg(op_family->getName(true))
-											.arg(op_family->getTypeName())
-											.arg(refs[0]->getName(true))
-					.arg(refs[0]->getTypeName()),
-					ERR_REM_DIRECT_REFERENCE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-		}
-
 		__removeObject(op_family, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
@@ -2107,7 +2095,14 @@ void DatabaseModel::addOperatorClass(OperatorClass *op_class, int obj_idx)
 
 void DatabaseModel::removeOperatorClass(OperatorClass *op_class, int obj_idx)
 {
-	__removeObject(op_class, obj_idx);
+	try
+	{
+		__removeObject(op_class, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
+	}
 }
 
 OperatorClass *DatabaseModel::getOperatorClass(unsigned obj_idx)
@@ -2129,24 +2124,13 @@ void DatabaseModel::addOperator(Operator *oper, int obj_idx)
 
 void DatabaseModel::removeOperator(Operator *oper, int obj_idx)
 {
-	if(oper)
+	try
 	{
-		vector<BaseObject *> refs;
-
-		getObjectReferences(oper, refs, true);
-
-		if(!refs.empty())
-		{
-
-			throw Exception(QString(Exception::getErrorMessage(ERR_REM_DIRECT_REFERENCE))
-											.arg(oper->getSignature(true))
-											.arg(oper->getTypeName())
-											.arg(refs[0]->getName(true))
-					.arg(refs[0]->getTypeName()),
-					ERR_REM_DIRECT_REFERENCE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-		}
-
 		__removeObject(oper, obj_idx);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
@@ -2216,47 +2200,44 @@ Type *DatabaseModel::getType(unsigned obj_idx)
 
 void DatabaseModel::removeUserType(BaseObject *object, int obj_idx)
 {
-	if(object)
+	try
 	{
-		vector<BaseObject *> refs;
-		QString str_aux;
-
-		getObjectReferences(object, refs, true);
-
-		if(!refs.empty())
-		{
-			ErrorType err_type;
-
-			if(!dynamic_cast<TableObject *>(refs[0]))
-			{
-				err_type=ERR_REM_DIRECT_REFERENCE;
-				str_aux=QString(Exception::getErrorMessage(err_type))
-								.arg(Utf8String::create(object->getName(true)))
-								.arg(object->getTypeName())
-								.arg(Utf8String::create(refs[0]->getName(true)))
-						.arg(refs[0]->getTypeName());
-			}
-			else
-			{
-				BaseObject *obj_ref_pai=dynamic_cast<TableObject *>(refs[0])->getParentTable();
-
-				err_type=ERR_REM_INDIRECT_REFERENCE;
-				str_aux=QString(Exception::getErrorMessage(err_type))
-								.arg(Utf8String::create(object->getName(true)))
-								.arg(object->getTypeName())
-								.arg(Utf8String::create(refs[0]->getName(true)))
-						.arg(refs[0]->getTypeName())
-						.arg(Utf8String::create(obj_ref_pai->getName(true)))
-						.arg(obj_ref_pai->getTypeName());
-			}
-
-			throw Exception(str_aux,err_type,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-		}
-
 		__removeObject(object, obj_idx);
 
 		//Removes the user type from the list of base types of pgsql
 		PgSQLType::removeUserType(object->getName(true), object);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
+	}
+}
+
+void DatabaseModel::addPermissions(vector<Permission *> &perms)
+{
+	vector<Permission *>::iterator itr=perms.begin(), itr_end=perms.end();
+
+	try
+	{
+		while(itr!=itr_end)
+		{
+			addPermission(*itr);
+			itr++;
+		}
+	}
+	catch(Exception &e)
+	{
+		//In case of errors removes the added permissions
+		itr=perms.begin();
+		itr_end=perms.end();
+
+		while(itr!=itr_end)
+		{
+			removePermission(*itr);
+			itr++;
+		}
+
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
@@ -2267,6 +2248,8 @@ void DatabaseModel::addPermission(Permission *perm)
 		if(!perm)
 			throw Exception(ERR_ASG_NOT_ALOC_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
+		TableObject *tab_obj=dynamic_cast<TableObject *>(perm->getObject());
+
 		if(getPermissionIndex(perm) >=0)
 		{
 			throw Exception(Exception::getErrorMessage(ERR_ASG_DUPLIC_PERMISSION)
@@ -2274,6 +2257,16 @@ void DatabaseModel::addPermission(Permission *perm)
 											.arg(perm->getObject()->getTypeName()),
 											ERR_ASG_DUPLIC_PERMISSION,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 		}
+		//Raises an error if the permission is referencing an object that does not exists on model
+		else if(perm->getObject()!=this &&
+						((tab_obj && (getObjectIndex(tab_obj->getParentTable()) < 0)) ||
+						 (!tab_obj && (getObjectIndex(perm->getObject()) < 0))))
+			throw Exception(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL)
+											.arg(Utf8String::create(perm->getName()))
+											.arg(Utf8String::create(perm->getObject()->getTypeName()))
+											.arg(Utf8String::create(perm->getObject()->getName()))
+											.arg(Utf8String::create(perm->getObject()->getTypeName())),
+											ERR_ASG_DUPLIC_PERMISSION,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 		permissions.push_back(perm);
 	}
@@ -2293,9 +2286,13 @@ void DatabaseModel::addPermission(Permission *perm)
 
 void DatabaseModel::removePermission(Permission *perm)
 {
-	if(perm)
+	try
 	{
 		__removeObject(perm);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
@@ -2318,8 +2315,6 @@ void DatabaseModel::removePermissions(BaseObject *object)
 		if(perm->getObject()==object)
 		{
 			permissions.erase(itr);
-			delete(perm);
-
 			itr=itr_end=permissions.end();
 
 			if(!permissions.empty())
@@ -2565,8 +2560,8 @@ void DatabaseModel::loadModel(const QString &filename)
 								XMLParser::getElementAttributes(attribs);
 								encoding=attribs[ParsersAttributes::ENCODING];
 								template_db=attribs[ParsersAttributes::TEMPLATE_DB];
-								localizations[0]=attribs[ParsersAttributes::LC_CTYPE_DB];
-								localizations[1]=attribs[ParsersAttributes::LC_COLLATE_DB];
+								localizations[0]=attribs[ParsersAttributes::_LC_CTYPE_];
+								localizations[1]=attribs[ParsersAttributes::_LC_COLLATE_];
 
 								if(!attribs[ParsersAttributes::CONN_LIMIT].isEmpty())
 									conn_limit=attribs[ParsersAttributes::CONN_LIMIT].toInt();
@@ -2740,6 +2735,10 @@ BaseObject *DatabaseModel::createObject(ObjectType obj_type)
 		else if(obj_type==OBJ_RELATIONSHIP ||
 						obj_type==BASE_RELATIONSHIP)
 			object=createRelationship();
+		else if(obj_type==OBJ_COLLATION)
+			object=createCollation();
+		else if(obj_type==OBJ_EXTENSION)
+			object=createExtension();
 	}
 
 	return(object);
@@ -2749,7 +2748,7 @@ void DatabaseModel::setBasicAttributes(BaseObject *object)
 {
 	map<QString, QString> attribs, attribs_aux;
 	QString elem_name;
-	BaseObject *tabspc=NULL, *owner=NULL;
+	BaseObject *tabspc=NULL, *owner=NULL, *collation=NULL;
 	Schema *schema=NULL;
 	ObjectType obj_type=BASE_OBJECT, obj_type_aux;
 	bool has_error=false, protected_obj=false, sql_disabled=false;
@@ -2811,6 +2810,15 @@ void DatabaseModel::setBasicAttributes(BaseObject *object)
 					object->setOwner(owner);
 					has_error=(!owner && !attribs_aux[ParsersAttributes::NAME].isEmpty());
 				}
+				//Defines the object's schema
+				else if(elem_name==ParsersAttributes::COLLATION)
+				{
+					obj_type=OBJ_COLLATION;
+					XMLParser::getElementAttributes(attribs_aux);
+					collation=getObject(attribs_aux[ParsersAttributes::NAME], obj_type);
+					object->setCollation(collation);
+					has_error=(!collation && !attribs_aux[ParsersAttributes::NAME].isEmpty());
+				}
 				//Defines the object's position (only for graphical objects)
 				else if(elem_name==ParsersAttributes::POSITION)
 				{
@@ -2871,7 +2879,8 @@ Role *DatabaseModel::createRole(void)
 
 	QString op_attribs[]={ ParsersAttributes::SUPERUSER, ParsersAttributes::CREATEDB,
 												 ParsersAttributes::CREATEROLE, ParsersAttributes::INHERIT,
-												 ParsersAttributes::LOGIN, ParsersAttributes::ENCRYPTED };
+												 ParsersAttributes::LOGIN, ParsersAttributes::ENCRYPTED,
+												 ParsersAttributes::REPLICATION };
 
 	unsigned op_vect[]={ Role::OP_SUPERUSER, Role::OP_CREATEDB,
 											 Role::OP_CREATEROLE, Role::OP_INHERIT,
@@ -2887,9 +2896,6 @@ Role *DatabaseModel::createRole(void)
 
 		role->setPassword(attribs[ParsersAttributes::PASSWORD]);
 		role->setValidity(attribs[ParsersAttributes::VALIDITY]);
-
-		if(!attribs[ParsersAttributes::SYSID].isEmpty())
-			role->setSysid(attribs[ParsersAttributes::SYSID].toInt());
 
 		if(!attribs[ParsersAttributes::CONN_LIMIT].isEmpty())
 			role->setConnectionLimit(attribs[ParsersAttributes::CONN_LIMIT].toInt());
@@ -3298,6 +3304,70 @@ Parameter DatabaseModel::createParameter(void)
 	return(param);
 }
 
+TypeAttribute DatabaseModel::createTypeAttribute(void)
+{
+	TypeAttribute tpattrib;
+	map<QString, QString> attribs;
+	QString elem;
+	BaseObject *collation=NULL;
+
+	try
+	{
+		XMLParser::savePosition();
+		XMLParser::getElementAttributes(attribs);
+
+		tpattrib.setName(attribs[ParsersAttributes::NAME]);
+
+		if(XMLParser::accessElement(XMLParser::CHILD_ELEMENT))
+		{
+			do
+			{
+				if(XMLParser::getElementType()==XML_ELEMENT_NODE)
+				{
+					elem=XMLParser::getElementName();
+
+					if(elem==ParsersAttributes::TYPE)
+					{
+						tpattrib.setType(createPgSQLType());
+					}
+					else if(elem==ParsersAttributes::COLLATION)
+					{
+						XMLParser::getElementAttributes(attribs);
+
+						collation=getObject(attribs[ParsersAttributes::NAME], OBJ_COLLATION);
+
+						//Raises an error if the operator class doesn't exists
+						if(!collation)
+						{
+							throw Exception(QString(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL))
+															.arg(Utf8String::create(tpattrib.getName()))
+															.arg(Utf8String::create(tpattrib.getTypeName()))
+															.arg(Utf8String::create(attribs[ParsersAttributes::NAME]))
+															.arg(BaseObject::getTypeName(OBJ_COLLATION)),
+															ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+						}
+
+						tpattrib.setCollation(collation);
+					}
+				}
+			}
+			while(XMLParser::accessElement(XMLParser::NEXT_ELEMENT));
+		}
+
+		XMLParser::restorePosition();
+	}
+	catch(Exception &e)
+	{
+		QString extra_info;
+		extra_info=QString(QObject::trUtf8("%1 (line: %2)")).arg(XMLParser::getLoadedFilename())
+							 .arg(XMLParser::getCurrentElement()->line);
+		XMLParser::restorePosition();
+		throw Exception(e.getErrorMessage(),e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e, extra_info);
+	}
+
+	return(tpattrib);
+}
+
 PgSQLType DatabaseModel::createPgSQLType(void)
 {
 	map<QString, QString> attribs;
@@ -3354,9 +3424,9 @@ Type *DatabaseModel::createType(void)
 	int count, i;
 	QStringList enums;
 	QString elem, str_aux;
-	Parameter param;
-	BaseObject *func=NULL;
-	PgSQLType copy_type;
+	BaseObject *func=NULL, *collation=NULL;
+	OperatorClass *op_class=NULL;
+	PgSQLType aux_type;
 
 	try
 	{
@@ -3404,8 +3474,14 @@ Type *DatabaseModel::createType(void)
 		}
 		else if(attribs[ParsersAttributes::CONFIGURATION]==ParsersAttributes::COMPOSITE_TYPE)
 			type->setConfiguration(Type::COMPOSITE_TYPE);
-		else
+		else if(attribs[ParsersAttributes::CONFIGURATION]==ParsersAttributes::ENUM_TYPE)
 			type->setConfiguration(Type::ENUMERATION_TYPE);
+		else
+		{
+			type->setConfiguration(Type::RANGE_TYPE);
+			func_types[ParsersAttributes::CANONICAL_FUNC]=Type::CANONICAL_FUNC;
+			func_types[ParsersAttributes::SUBTYPE_DIFF_FUNC]=Type::SUBTYPE_DIFF_FUNC;
+		}
 
 		if(XMLParser::accessElement(XMLParser::CHILD_ELEMENT))
 		{
@@ -3426,17 +3502,55 @@ Type *DatabaseModel::createType(void)
 							type->addEnumeration(enums[i]);
 					}
 					//Specific operations for COMPOSITE types
-					else if(elem==ParsersAttributes::PARAMETER)
+					else if(elem==ParsersAttributes::TYPE_ATTRIBUTE)
 					{
-						//The attributes is configured on XML as <parameter> tags
-						param=createParameter();
-						type->addAttribute(param);
+						type->addAttribute(createTypeAttribute());
 					}
-					//Specific operations for BASE type
+					//Specific operations for BASE / RANGE type
 					else if(elem==ParsersAttributes::TYPE)
 					{
-						copy_type=createPgSQLType();
-						type->setLikeType(copy_type);
+						aux_type=createPgSQLType();
+
+						if(type->getConfiguration()==Type::RANGE_TYPE)
+							type->setSubtype(aux_type);
+						else
+							type->setLikeType(aux_type);
+					}
+					else if(elem==ParsersAttributes::COLLATION)
+					{
+						XMLParser::getElementAttributes(attribs);
+						collation=getObject(attribs[ParsersAttributes::NAME], OBJ_COLLATION);
+
+						//Raises an error if the operator class doesn't exists
+						if(!collation)
+						{
+							throw Exception(QString(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL))
+															.arg(Utf8String::create(type->getName()))
+															.arg(Utf8String::create(type->getTypeName()))
+															.arg(Utf8String::create(attribs[ParsersAttributes::NAME]))
+															.arg(BaseObject::getTypeName(OBJ_COLLATION)),
+															ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+						}
+
+						type->setCollation(collation);
+					}
+					if(elem==ParsersAttributes::OP_CLASS)
+					{
+						XMLParser::getElementAttributes(attribs);
+						op_class=dynamic_cast<OperatorClass *>(getObject(attribs[ParsersAttributes::NAME], OBJ_OPCLASS));
+
+						//Raises an error if the operator class doesn't exists
+						if(!op_class)
+						{
+							throw Exception(QString(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL))
+															.arg(Utf8String::create(type->getName()))
+															.arg(Utf8String::create(type->getTypeName()))
+															.arg(Utf8String::create(attribs[ParsersAttributes::NAME]))
+															.arg(BaseObject::getTypeName(OBJ_OPCLASS)),
+															ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+						}
+
+						type->setSubtypeOpClass(op_class);
 					}
 					//Configuring the functions used by the type (only for BASE type)
 					else if(elem==ParsersAttributes::FUNCTION)
@@ -3458,8 +3572,7 @@ Type *DatabaseModel::createType(void)
 						else if(func_types.count(attribs[ParsersAttributes::REF_TYPE])==0)
 							throw Exception(ERR_REF_FUNCTION_INV_TYPE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
-						type->setFunction(func_types[attribs[ParsersAttributes::REF_TYPE]],
-								dynamic_cast<Function *>(func));
+						type->setFunction(func_types[attribs[ParsersAttributes::REF_TYPE]],	dynamic_cast<Function *>(func));
 					}
 				}
 			}
@@ -3710,14 +3823,10 @@ Operator *DatabaseModel::createOperator(void)
 
 		func_types[ParsersAttributes::OPERATOR_FUNC]=Operator::FUNC_OPERATOR;
 		func_types[ParsersAttributes::JOIN_FUNC]=Operator::FUNC_JOIN;
-		func_types[ParsersAttributes::RESTRICTION_FUNC]=Operator::FUNC_RESTRICTION;
+		func_types[ParsersAttributes::RESTRICTION_FUNC]=Operator::FUNC_RESTRICT;
 
 		oper_types[ParsersAttributes::COMMUTATOR_OP]=Operator::OPER_COMMUTATOR;
-		oper_types[ParsersAttributes::GREATER_OP]=Operator::OPER_GREATER;
-		oper_types[ParsersAttributes::LESS_OP]=Operator::OPER_LESS;
 		oper_types[ParsersAttributes::NEGATOR_OP]=Operator::OPER_NEGATOR;
-		oper_types[ParsersAttributes::SORT_OP]=Operator::OPER_SORT1;
-		oper_types[ParsersAttributes::SORT2_OP]=Operator::OPER_SORT2;
 
 		if(XMLParser::accessElement(XMLParser::CHILD_ELEMENT))
 		{
@@ -3793,14 +3902,14 @@ Operator *DatabaseModel::createOperator(void)
 
 OperatorClass *DatabaseModel::createOperatorClass(void)
 {
-	map<QString, QString> attribs;
+	map<QString, QString> attribs, attribs_aux;
 	map<QString, unsigned> elem_types;
 	BaseObject *object=NULL;
 	QString elem;
 	PgSQLType type;
 	OperatorClass *op_class=NULL;
 	OperatorClassElement class_elem;
-	bool recheck;
+	bool for_order_by;
 	unsigned stg_number, elem_type;
 
 	try
@@ -3850,7 +3959,7 @@ OperatorClass *DatabaseModel::createOperatorClass(void)
 					{
 						XMLParser::getElementAttributes(attribs);
 
-						recheck=attribs[ParsersAttributes::RECHECK]==ParsersAttributes::_TRUE_;
+						for_order_by=attribs[ParsersAttributes::FOR_ORDER_BY]==ParsersAttributes::_TRUE_;
 						stg_number=attribs[ParsersAttributes::STRATEGY_NUM].toUInt();
 						elem_type=elem_types[attribs[ParsersAttributes::TYPE]];
 
@@ -3871,7 +3980,27 @@ OperatorClass *DatabaseModel::createOperatorClass(void)
 						else if(elem_type==OperatorClassElement::OPERATOR_ELEM)
 						{
 							object=getObject(attribs[ParsersAttributes::SIGNATURE],OBJ_OPERATOR);
-							class_elem.setOperator(dynamic_cast<Operator *>(object),stg_number,recheck);
+							class_elem.setOperator(dynamic_cast<Operator *>(object),stg_number);
+
+							if(XMLParser::hasElement(XMLParser::NEXT_ELEMENT))
+							{
+								XMLParser::savePosition();
+								XMLParser::accessElement(XMLParser::NEXT_ELEMENT);
+								XMLParser::getElementAttributes(attribs_aux);
+
+								object=getObject(attribs_aux[ParsersAttributes::NAME],OBJ_OPFAMILY);
+
+								if(!object && !attribs_aux[ParsersAttributes::NAME].isEmpty())
+									throw Exception(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL)
+																	.arg(Utf8String::create(op_class->getName()))
+																	.arg(op_class->getTypeName())
+																	.arg(Utf8String::create(attribs_aux[ParsersAttributes::NAME]))
+																	.arg(BaseObject::getTypeName(OBJ_OPFAMILY)),
+										ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+
+								class_elem.setOperatorFamily(dynamic_cast<OperatorFamily *>(object), for_order_by);
+								XMLParser::restorePosition();
+							}
 						}
 
 						op_class->addElement(class_elem);
@@ -4120,6 +4249,7 @@ Constraint *DatabaseModel::createConstraint(BaseObject *parent_obj)
 	int count, i;
 	unsigned col_type;
 	ObjectType obj_type;
+	ExcludeElement exc_elem;
 
 	try
 	{
@@ -4143,6 +4273,7 @@ Constraint *DatabaseModel::createConstraint(BaseObject *parent_obj)
 		{
 			obj_type=OBJ_TABLE;
 			table=dynamic_cast<Table *>(getObject(attribs[ParsersAttributes::TABLE], OBJ_TABLE));
+			parent_obj=table;
 			ins_constr_table=true;
 
 			//Raises an error if the parent table doesn't exists
@@ -4168,14 +4299,17 @@ Constraint *DatabaseModel::createConstraint(BaseObject *parent_obj)
 			constr_type=ConstraintType::primary_key;
 		else if(attribs[ParsersAttributes::TYPE]==ParsersAttributes::FK_CONSTR)
 			constr_type=ConstraintType::foreign_key;
-		else
+		else if(attribs[ParsersAttributes::TYPE]==ParsersAttributes::UQ_CONSTR)
 			constr_type=ConstraintType::unique;
+		else
+			constr_type=ConstraintType::exclude;
 
 		constr->setConstraintType(constr_type);
+
 		if(!attribs[ParsersAttributes::FACTOR].isEmpty())
 			constr->setFillFactor(attribs[ParsersAttributes::FACTOR].toUInt());
-		setBasicAttributes(constr);
 
+		setBasicAttributes(constr);
 
 		//Raises an error if the constraint is a primary key and no parent object is specified
 		if(!parent_obj && constr_type==ConstraintType::primary_key)
@@ -4217,8 +4351,13 @@ Constraint *DatabaseModel::createConstraint(BaseObject *parent_obj)
 				throw Exception(str_aux,ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 			}
 
-			constr->setReferencedTable(ref_table);
+			constr->setReferencedTable(dynamic_cast<BaseTable *>(ref_table));
 		}
+		else if(constr_type==ConstraintType::check)
+		{
+			constr->setNoInherit(attribs[ParsersAttributes::NO_INHERIT]==ParsersAttributes::_TRUE_);
+		}
+
 
 		if(XMLParser::accessElement(XMLParser::CHILD_ELEMENT))
 		{
@@ -4228,7 +4367,12 @@ Constraint *DatabaseModel::createConstraint(BaseObject *parent_obj)
 				{
 					elem=XMLParser::getElementName();
 
-					if(elem==ParsersAttributes::EXPRESSION)
+					if(elem==ParsersAttributes::EXCLUDE_ELEMENT)
+					{
+						createElement(exc_elem, constr, parent_obj);
+						constr->addExcludeElement(exc_elem);
+					}
+					else if(elem==ParsersAttributes::EXPRESSION)
 					{
 						XMLParser::savePosition();
 						XMLParser::accessElement(XMLParser::CHILD_ELEMENT);
@@ -4306,15 +4450,140 @@ Constraint *DatabaseModel::createConstraint(BaseObject *parent_obj)
 	return(constr);
 }
 
+void DatabaseModel::createElement(Element &elem, TableObject *tab_obj, BaseObject *parent_obj)
+{
+	map<QString, QString> attribs;
+	Column *column=NULL;
+	OperatorClass *op_class=NULL;
+	Operator *oper=NULL;
+	Collation *collation=NULL;
+	QString xml_elem;
+
+	xml_elem=XMLParser::getElementName();
+
+	if(xml_elem==ParsersAttributes::INDEX_ELEMENT || xml_elem==ParsersAttributes::EXCLUDE_ELEMENT)
+	{
+		XMLParser::getElementAttributes(attribs);
+
+		elem.setSortingAttribute(Element::ASC_ORDER, attribs[ParsersAttributes::ASC_ORDER]==ParsersAttributes::_TRUE_);
+		elem.setSortingAttribute(Element::NULLS_FIRST, attribs[ParsersAttributes::NULLS_FIRST]==ParsersAttributes::_TRUE_);
+		elem.setSortingEnabled(attribs[ParsersAttributes::USE_SORTING]!=ParsersAttributes::_FALSE_);
+
+		XMLParser::savePosition();
+		XMLParser::accessElement(XMLParser::CHILD_ELEMENT);
+
+		do
+		{
+			xml_elem=XMLParser::getElementName();
+
+			if(XMLParser::getElementType()==XML_ELEMENT_NODE)
+			{
+				if(xml_elem==ParsersAttributes::OP_CLASS)
+				{
+					XMLParser::getElementAttributes(attribs);
+					op_class=dynamic_cast<OperatorClass *>(getObject(attribs[ParsersAttributes::NAME], OBJ_OPCLASS));
+
+					//Raises an error if the operator class doesn't exists
+					if(!op_class)
+					{
+						throw Exception(QString(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL))
+														.arg(Utf8String::create(tab_obj->getName()))
+														.arg(Utf8String::create(tab_obj->getTypeName()))
+														.arg(Utf8String::create(attribs[ParsersAttributes::NAME]))
+														.arg(BaseObject::getTypeName(OBJ_OPCLASS)),
+														ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+					}
+
+					elem.setOperatorClass(op_class);
+				}
+				//Checking if elem is a ExcludeElement to be able to assign an operator to it
+				else if(xml_elem==ParsersAttributes::OPERATOR && dynamic_cast<ExcludeElement *>(&elem))
+				{
+					XMLParser::getElementAttributes(attribs);
+					oper=dynamic_cast<Operator *>(getObject(attribs[ParsersAttributes::SIGNATURE], OBJ_OPERATOR));
+
+					//Raises an error if the operator doesn't exists
+					if(!oper)
+					{
+						throw Exception(QString(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL))
+														.arg(Utf8String::create(tab_obj->getName()))
+														.arg(Utf8String::create(tab_obj->getTypeName()))
+														.arg(Utf8String::create(attribs[ParsersAttributes::SIGNATURE]))
+														.arg(BaseObject::getTypeName(OBJ_OPERATOR)),
+														ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+					}
+
+					dynamic_cast<ExcludeElement &>(elem).setOperator(oper);
+				}
+				else if(xml_elem==ParsersAttributes::COLLATION && dynamic_cast<IndexElement *>(&elem))
+				{
+					XMLParser::getElementAttributes(attribs);
+					collation=dynamic_cast<Collation *>(getObject(attribs[ParsersAttributes::NAME], OBJ_COLLATION));
+
+					//Raises an error if the operator class doesn't exists
+					if(!collation)
+					{
+						throw Exception(QString(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL))
+														.arg(Utf8String::create(tab_obj->getName()))
+														.arg(Utf8String::create(tab_obj->getTypeName()))
+														.arg(Utf8String::create(attribs[ParsersAttributes::NAME]))
+														.arg(BaseObject::getTypeName(OBJ_COLLATION)),
+														ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+					}
+
+					dynamic_cast<IndexElement &>(elem).setCollation(collation);
+				}
+				else if(xml_elem==ParsersAttributes::COLUMN)
+				{
+					XMLParser::getElementAttributes(attribs);
+
+					if(parent_obj->getObjectType()==OBJ_TABLE)
+					{
+						column=dynamic_cast<Table *>(parent_obj)->getColumn(attribs[ParsersAttributes::NAME]);
+
+						if(!column)
+							column=dynamic_cast<Table *>(parent_obj)->getColumn(attribs[ParsersAttributes::NAME], true);
+					}
+					else
+					{
+						column=dynamic_cast<Column *>(dynamic_cast<Relationship *>(parent_obj)->getObject(attribs[ParsersAttributes::NAME], OBJ_COLUMN));
+					}
+
+					//Raises an error if the column doesn't exists
+					if(!column)
+					{
+						throw Exception(QString(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL))
+														.arg(Utf8String::create(tab_obj->getName()))
+														.arg(Utf8String::create(tab_obj->getTypeName()))
+														.arg(Utf8String::create(attribs[ParsersAttributes::NAME]))
+														.arg(BaseObject::getTypeName(OBJ_COLUMN)),
+														ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+					}
+
+					elem.setColumn(column);
+				}
+				else if(xml_elem==ParsersAttributes::EXPRESSION)
+				{
+					XMLParser::savePosition();
+					XMLParser::accessElement(XMLParser::CHILD_ELEMENT);
+					elem.setExpression(XMLParser::getElementContent());
+					XMLParser::restorePosition();
+				}
+			}
+		}
+		while(XMLParser::accessElement(XMLParser::NEXT_ELEMENT));
+
+		XMLParser::restorePosition();
+	}
+}
+
 Index *DatabaseModel::createIndex(Table *table)
 {
 	map<QString, QString> attribs;
 	Index *index=NULL;
-	Column *column=NULL;
-	OperatorClass *op_class=NULL;
-	QString elem, str_aux, expr;
-	bool inc_idx_table=false, use_sorting=false,
-			asc_order=false, nulls_first=false;
+	QString elem, str_aux;
+	bool inc_idx_table=false;
+	IndexElement idx_elem;
 
 	try
 	{
@@ -4358,64 +4627,8 @@ Index *DatabaseModel::createIndex(Table *table)
 
 					if(elem==ParsersAttributes::INDEX_ELEMENT)
 					{
-						XMLParser::getElementAttributes(attribs);
-						nulls_first=(attribs[ParsersAttributes::NULLS_FIRST]==ParsersAttributes::_TRUE_);
-						asc_order=(attribs[ParsersAttributes::ASC_ORDER]==ParsersAttributes::_TRUE_);
-						use_sorting=(attribs[ParsersAttributes::USE_SORTING]!=ParsersAttributes::_FALSE_);
-						column=NULL;
-						expr.clear();
-
-						XMLParser::savePosition();
-						XMLParser::accessElement(XMLParser::CHILD_ELEMENT);
-
-						do
-						{
-							elem=XMLParser::getElementName();
-
-							if(XMLParser::getElementType()==XML_ELEMENT_NODE)
-							{
-								if(elem==ParsersAttributes::OP_CLASS)
-								{
-									XMLParser::getElementAttributes(attribs);
-									op_class=dynamic_cast<OperatorClass *>(getObject(attribs[ParsersAttributes::NAME], OBJ_OPCLASS));
-
-									//Raises an error if the operator class doesn't exists
-									if(!op_class)
-									{
-										str_aux=QString(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL))
-														.arg(Utf8String::create(index->getName()))
-														.arg(BaseObject::getTypeName(OBJ_INDEX))
-														.arg(Utf8String::create(attribs[ParsersAttributes::OP_CLASS]))
-												.arg(BaseObject::getTypeName(OBJ_OPCLASS));
-
-										throw Exception(str_aux,ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-									}
-								}
-								else if(elem==ParsersAttributes::COLUMN)
-								{
-									XMLParser::getElementAttributes(attribs);
-									column=table->getColumn(attribs[ParsersAttributes::NAME]);
-
-									if(!column)
-										column=table->getColumn(attribs[ParsersAttributes::NAME], true);
-								}
-								else if(elem==ParsersAttributes::EXPRESSION)
-								{
-									XMLParser::savePosition();
-									XMLParser::accessElement(XMLParser::CHILD_ELEMENT);
-									expr=XMLParser::getElementContent();
-									XMLParser::restorePosition();
-								}
-							}
-						}
-						while(XMLParser::accessElement(XMLParser::NEXT_ELEMENT));
-
-						if(!expr.isEmpty())
-							index->addElement(expr, op_class, use_sorting, asc_order, nulls_first);
-						else
-							index->addElement(column, op_class, use_sorting, asc_order, nulls_first);
-
-						XMLParser::restorePosition();
+						createElement(idx_elem, index, table);
+						index->addIndexElement(idx_elem);
 					}
 					else if(elem==ParsersAttributes::CONDITION)
 					{
@@ -4515,7 +4728,7 @@ Rule *DatabaseModel::createRule(void)
 	return(rule);
 }
 
-Trigger *DatabaseModel::createTrigger(Table *table)
+Trigger *DatabaseModel::createTrigger(BaseTable *table)
 {
 	map<QString, QString> attribs;
 	Trigger *trigger=NULL;
@@ -4535,7 +4748,8 @@ Trigger *DatabaseModel::createTrigger(Table *table)
 		else if(!table && !attribs[ParsersAttributes::TABLE].isEmpty())
 		{
 			inc_trig_table=true;
-			table=dynamic_cast<Table *>(getObject(attribs[ParsersAttributes::TABLE], OBJ_TABLE));
+			table=dynamic_cast<BaseTable *>(getObject(attribs[ParsersAttributes::TABLE], OBJ_TABLE));
+
 			if(!table)
 				throw Exception(QString(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL))
 												.arg(Utf8String::create(attribs[ParsersAttributes::NAME]))
@@ -4550,24 +4764,21 @@ Trigger *DatabaseModel::createTrigger(Table *table)
 
 		setBasicAttributes(trigger);
 
+		trigger->setConstraint(attribs[ParsersAttributes::CONSTRAINT]==ParsersAttributes::_TRUE_);
+
 		trigger->setEvent(EventType::on_insert,
-											(attribs[ParsersAttributes::INS_EVENT]==
-											ParsersAttributes::_TRUE_));
+											(attribs[ParsersAttributes::INS_EVENT]==ParsersAttributes::_TRUE_));
 
 		trigger->setEvent(EventType::on_delete,
-											(attribs[ParsersAttributes::DEL_EVENT]==
-											ParsersAttributes::_TRUE_));
+											(attribs[ParsersAttributes::DEL_EVENT]==ParsersAttributes::_TRUE_));
 
 		trigger->setEvent(EventType::on_update,
-											(attribs[ParsersAttributes::UPD_EVENT]==
-											ParsersAttributes::_TRUE_));
+											(attribs[ParsersAttributes::UPD_EVENT]==ParsersAttributes::_TRUE_));
 
 		trigger->setEvent(EventType::on_truncate,
-											(attribs[ParsersAttributes::TRUNC_EVENT]==
-											ParsersAttributes::_TRUE_));
+											(attribs[ParsersAttributes::TRUNC_EVENT]==ParsersAttributes::_TRUE_));
 
-		trigger->setExecutePerRow(attribs[ParsersAttributes::PER_ROW]==
-				ParsersAttributes::_TRUE_);
+		trigger->setExecutePerRow(attribs[ParsersAttributes::PER_ROW]==ParsersAttributes::_TRUE_);
 
 		trigger->setFiringType(FiringType(attribs[ParsersAttributes::FIRING_TYPE]));
 
@@ -4580,13 +4791,31 @@ Trigger *DatabaseModel::createTrigger(Table *table)
 				trigger->addArgument(list_aux[i]);
 		}
 
-		trigger->setDeferrable(attribs[ParsersAttributes::DEFERRABLE]==
-				ParsersAttributes::_TRUE_);
+		trigger->setDeferrable(attribs[ParsersAttributes::DEFERRABLE]==ParsersAttributes::_TRUE_);
+
 		if(trigger->isDeferrable())
 			trigger->setDeferralType(attribs[ParsersAttributes::DEFER_TYPE]);
 
-		ref_table=getObject(attribs[ParsersAttributes::REF_TABLE], OBJ_TABLE);
-		trigger->setReferecendTable(ref_table);
+		if(!attribs[ParsersAttributes::REF_TABLE].isEmpty())
+		{
+			ref_table=getObject(attribs[ParsersAttributes::REF_TABLE], OBJ_TABLE);
+
+			if(!ref_table)
+				ref_table=getObject(attribs[ParsersAttributes::REF_TABLE], OBJ_VIEW);
+
+			//Raises an error if the trigger is referencing a inexistent table
+			if(!ref_table)
+			{
+				throw Exception(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL)
+												.arg(Utf8String::create(trigger->getName()))
+												.arg(Utf8String::create(trigger->getTypeName()))
+												.arg(Utf8String::create(attribs[ParsersAttributes::REF_TABLE]))
+												.arg(BaseObject::getTypeName(OBJ_TABLE)),
+												ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+			}
+
+			trigger->setReferecendTable(dynamic_cast<BaseTable *>(ref_table));
+		}
 
 		if(XMLParser::accessElement(XMLParser::CHILD_ELEMENT))
 		{
@@ -4632,10 +4861,10 @@ Trigger *DatabaseModel::createTrigger(Table *table)
 
 						for(i=0; i < count; i++)
 						{
-							column=table->getColumn(list_aux[i]);
+							column=dynamic_cast<Column *>(table->getObject(list_aux[i], OBJ_COLUMN));
 
-							if(!column)
-								column=table->getColumn(list_aux[i], true);
+							if(!column && dynamic_cast<Table *>(table))
+								column=dynamic_cast<Table *>(table)->getColumn(list_aux[i], true);
 
 							trigger->addColumn(column);
 						}
@@ -4866,6 +5095,10 @@ View *DatabaseModel::createView(void)
 
 						XMLParser::restorePosition();
 					}
+					else if(elem==BaseObject::getSchemaName(OBJ_RULE))
+						view->addRule(createRule());
+					else if(elem==BaseObject::getSchemaName(OBJ_TRIGGER))
+						view->addTrigger(createTrigger(view));
 				}
 			}
 			while(XMLParser::accessElement(XMLParser::NEXT_ELEMENT));
@@ -4906,6 +5139,94 @@ View *DatabaseModel::createView(void)
 	return(view);
 }
 
+Collation *DatabaseModel::createCollation(void)
+{
+	Collation *collation=NULL;
+	BaseObject *copy_coll=NULL;
+	EncodingType encoding;
+	map<QString, QString> attribs;
+
+	try
+	{
+		collation=new Collation;
+		setBasicAttributes(collation);
+
+		XMLParser::getElementAttributes(attribs);
+
+		encoding=EncodingType(attribs[ParsersAttributes::ENCODING]);
+		collation->setEncoding(encoding);
+
+		//Creating a collation from a base locale
+		if(!attribs[ParsersAttributes::LOCALE].isEmpty())
+			collation->setLocale(attribs[ParsersAttributes::LOCALE]);
+		//Creating a collation from another collation
+		else if(!attribs[ParsersAttributes::COLLATION].isEmpty())
+		{
+			copy_coll=this->getObject(attribs[ParsersAttributes::COLLATION], OBJ_COLLATION);
+
+			//Raises an error if the copy collation doesn't exists
+			if(!copy_coll)
+			{
+				throw Exception(QString(Exception::getErrorMessage(ERR_REF_OBJ_INEXISTS_MODEL))
+												.arg(Utf8String::create(collation->getName()))
+												.arg(BaseObject::getTypeName(OBJ_COLLATION))
+												.arg(Utf8String::create(attribs[ParsersAttributes::COLLATION]))
+												.arg(BaseObject::getTypeName(OBJ_COLLATION)),
+							ERR_REF_OBJ_INEXISTS_MODEL,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+			}
+
+			collation->setCollation(dynamic_cast<Collation *>(copy_coll));
+		}
+		//Creating a collation using LC_COLLATE and LC_CTYPE params
+		else
+		{
+			collation->setLocalization(LC_COLLATE, attribs[ParsersAttributes::_LC_COLLATE_]);
+			collation->setLocalization(LC_CTYPE, attribs[ParsersAttributes::_LC_CTYPE_]);
+		}
+	}
+	catch(Exception &e)
+	{
+		QString extra_info;
+
+		extra_info=QString(QObject::trUtf8("%1 (line: %2)")).arg(XMLParser::getLoadedFilename())
+									 .arg(XMLParser::getCurrentElement()->line);
+
+		if(collation) delete(collation);
+
+		throw Exception(e.getErrorMessage(),e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e, extra_info);
+	}
+
+	return(collation);
+}
+
+Extension *DatabaseModel::createExtension(void)
+{
+	Extension *extension=NULL;
+	map<QString, QString> attribs;
+
+	try
+	{
+		extension=new Extension;
+		XMLParser::getElementAttributes(attribs);
+		setBasicAttributes(extension);
+
+		extension->setHandlesType(attribs[ParsersAttributes::HANDLES_TYPE]==ParsersAttributes::_TRUE_);
+		extension->setVersion(Extension::CUR_VERSION, attribs[ParsersAttributes::CUR_VERSION]);
+		extension->setVersion(Extension::OLD_VERSION, attribs[ParsersAttributes::OLD_VERSION]);
+	}
+	catch(Exception &e)
+	{
+		QString extra_info;
+		extra_info=QString(QObject::trUtf8("%1 (line: %2)")).arg(XMLParser::getLoadedFilename())
+							 .arg(XMLParser::getCurrentElement()->line);
+
+		if(extension) delete(extension);
+		throw Exception(e.getErrorMessage(),e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e, extra_info);
+	}
+
+	return(extension);
+}
+
 Textbox *DatabaseModel::createTextbox(void)
 {
 	Textbox *txtbox=NULL;
@@ -4932,13 +5253,13 @@ Textbox *DatabaseModel::createTextbox(void)
 	}
 	catch(Exception &e)
 	{
-		QString info_adicional;
-		info_adicional=QString(QObject::trUtf8("%1 (line: %2)")).arg(XMLParser::getLoadedFilename())
+		QString extra_info;
+		extra_info=QString(QObject::trUtf8("%1 (line: %2)")).arg(XMLParser::getLoadedFilename())
 									 .arg(XMLParser::getCurrentElement()->line);
 
 		if(txtbox) delete(txtbox);
 
-		throw Exception(e.getErrorMessage(),e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e, info_adicional);
+		throw Exception(e.getErrorMessage(),e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e, extra_info);
 	}
 
 	return(txtbox);
@@ -5044,7 +5365,9 @@ BaseRelationship *DatabaseModel::createRelationship(void)
 					src_mand, dst_mand,
 					auto_suffix, attribs[ParsersAttributes::SRC_SUFFIX],
 					attribs[ParsersAttributes::DST_SUFFIX],
-					identifier, deferrable, defer_type);
+					identifier, deferrable, defer_type,
+					CopyOptions(attribs[ParsersAttributes::COPY_MODE].toUInt(),
+											attribs[ParsersAttributes::COPY_OPTIONS].toUInt()));
 
 			if(!attribs[ParsersAttributes::TABLE_NAME].isEmpty())
 				rel->setTableNameRelNN(attribs[ParsersAttributes::TABLE_NAME]);
@@ -5368,19 +5691,20 @@ QString DatabaseModel::__getCodeDefinition(unsigned def_type)
 
 	if(def_type==SchemaParser::SQL_DEFINITION)
 	{
-		attributes[ParsersAttributes::ENCODING]="'" + (~encoding) + "'";
+		if(encoding!=BaseType::null)
+			attributes[ParsersAttributes::ENCODING]="'" + (~encoding) + "'";
 
 		if(!localizations[1].isEmpty())
-			attributes[ParsersAttributes::LC_COLLATE_DB]="'" + localizations[1] + "'";
+			attributes[ParsersAttributes::_LC_COLLATE_]="'" + localizations[1] + "'";
 
 		if(!localizations[0].isEmpty())
-			attributes[ParsersAttributes::LC_CTYPE_DB]="'" + localizations[0]  + "'";
+			attributes[ParsersAttributes::_LC_CTYPE_]="'" + localizations[0]  + "'";
 	}
 	else
 	{
 		attributes[ParsersAttributes::ENCODING]=(~encoding);
-		attributes[ParsersAttributes::LC_COLLATE_DB]=localizations[1];
-		attributes[ParsersAttributes::LC_CTYPE_DB]=localizations[0];
+		attributes[ParsersAttributes::_LC_COLLATE_]=localizations[1];
+		attributes[ParsersAttributes::_LC_CTYPE_]=localizations[0];
 	}
 
 	attributes[ParsersAttributes::TEMPLATE_DB]=template_db;
@@ -5415,7 +5739,7 @@ QString DatabaseModel::getCodeDefinition(unsigned def_type, bool export_file)
 	Relationship *rel=NULL;
 	ObjectType obj_type,
 			aux_obj_types[]={ OBJ_ROLE, OBJ_TABLESPACE, OBJ_SCHEMA },
-			obj_types[]={ OBJ_LANGUAGE, OBJ_FUNCTION, OBJ_TYPE,
+			obj_types[]={ OBJ_COLLATION, OBJ_LANGUAGE, OBJ_FUNCTION, OBJ_TYPE,
 										OBJ_CAST, OBJ_CONVERSION,
 										OBJ_OPERATOR, OBJ_OPFAMILY, OBJ_OPCLASS,
 										OBJ_AGGREGATE, OBJ_DOMAIN, OBJ_TEXTBOX, BASE_RELATIONSHIP,
@@ -5451,7 +5775,7 @@ QString DatabaseModel::getCodeDefinition(unsigned def_type, bool export_file)
 					 (object->getObjectType()==OBJ_SCHEMA && object->getName()=="public" && def_type==SchemaParser::XML_DEFINITION))
 				{
 					//Generates the code definition and concatenates to the others
-					attribs_aux[attrib]+=validateObjectDefinition(object, def_type);
+					attribs_aux[attrib]+=object->getCodeDefinition(def_type);
 
 					//Increments the generated definition count and emits the signal
 					gen_defs_count++;
@@ -5474,9 +5798,9 @@ QString DatabaseModel::getCodeDefinition(unsigned def_type, bool export_file)
 
 		//Generating the definition for the other objects type
 		if(def_type==SchemaParser::XML_DEFINITION)
-			count=16;
+			count=17;
 		else
-			count=12;
+			count=13;
 
 		for(i=0; i < count; i++)
 		{
@@ -5579,7 +5903,7 @@ QString DatabaseModel::getCodeDefinition(unsigned def_type, bool export_file)
 		{
 			BaseObject *objs[3]={NULL, NULL, NULL};
 			vector<BaseObject *> vet_aux;
-			count=16;
+			//count=17;
 
 			vet_aux=relationships;
 			vet_aux.insert(vet_aux.end(), tables.begin(),tables.end());
@@ -5677,13 +6001,10 @@ QString DatabaseModel::getCodeDefinition(unsigned def_type, bool export_file)
 			}
 			else
 			{
-				if((obj_type==OBJ_LANGUAGE &&
-						(object->getName()==~LanguageType("c") ||
-						 object->getName()==~LanguageType("sql") ||
-						 object->getName()==~LanguageType("plpgsql"))))
+				if(object->isSystemObject())
 					attribs_aux[attrib]+="";
 				else
-					attribs_aux[attrib]+=validateObjectDefinition(object, def_type);
+					attribs_aux[attrib]+=object->getCodeDefinition(def_type);
 			}
 
 			gen_defs_count++;
@@ -5696,16 +6017,6 @@ QString DatabaseModel::getCodeDefinition(unsigned def_type, bool export_file)
 														object->getObjectType());
 			}
 		}
-
-		//Creates the SQL definition for user added foreign keys
-		/* if(def_type==SchemaParser::SQL_DEFINITION)
-		{
-			while(!fks.empty())
-			{
-				attribs_aux[attrib]+=fks.back()->getCodeDefinition(def_type, true);
-				fks.pop_back();
-			}
-		} */
 
 		//Creates the code definition for user added foreign keys
 		while(!fks.empty())
@@ -5810,21 +6121,23 @@ void DatabaseModel::getObjectDependecies(BaseObject *object, vector<BaseObject *
 	{
 		deps.push_back(object);
 
-
 		if((deps.size()==1 && !inc_indirect_deps) || inc_indirect_deps)
 		{
 			ObjectType obj_type=object->getObjectType();
 
 			/* if the object has a schema, tablespace and owner applies the
 		 dependecy search in these objects */
-			if(object->getSchema() && inc_indirect_deps)
+			if(object->getSchema() /*&& inc_indirect_deps*/)
 				getObjectDependecies(object->getSchema(), deps, inc_indirect_deps);
 
-			if(object->getTablespace() && inc_indirect_deps)
+			if(object->getTablespace() /*&& inc_indirect_deps*/)
 				getObjectDependecies(object->getTablespace(), deps, inc_indirect_deps);
 
-			if(object->getOwner()  && inc_indirect_deps)
+			if(object->getOwner() /*&& inc_indirect_deps*/)
 				getObjectDependecies(object->getOwner(), deps, inc_indirect_deps);
+
+			if(object->getCollation() /*&& inc_indirect_deps*/)
+				getObjectDependecies(object->getCollation(), deps, inc_indirect_deps);
 
 			//** Getting the dependecies for operator class **
 			if(obj_type==OBJ_OPCLASS)
@@ -5875,8 +6188,7 @@ void DatabaseModel::getObjectDependecies(BaseObject *object, vector<BaseObject *
 				BaseObject *usr_type=getObjectPgSQLType(func->getReturnType());
 				unsigned count, i;
 
-				if(func->getLanguage()->getName()!=~LanguageType("c") &&
-					 func->getLanguage()->getName()!=~LanguageType("sql"))
+				if(!func->isSystemObject())
 					getObjectDependecies(func->getLanguage(), deps, inc_indirect_deps);
 
 				if(usr_type)
@@ -5945,7 +6257,7 @@ void DatabaseModel::getObjectDependecies(BaseObject *object, vector<BaseObject *
 				BaseObject *usr_type=NULL;
 				unsigned i;
 
-				for(i=Operator::FUNC_OPERATOR; i <= Operator::FUNC_RESTRICTION; i++)
+				for(i=Operator::FUNC_OPERATOR; i <= Operator::FUNC_RESTRICT; i++)
 				{
 					if(oper->getFunction(i))
 						getObjectDependecies(oper->getFunction(i), deps, inc_indirect_deps);
@@ -5959,7 +6271,7 @@ void DatabaseModel::getObjectDependecies(BaseObject *object, vector<BaseObject *
 						getObjectDependecies(usr_type, deps, inc_indirect_deps);
 				}
 
-				for(i=Operator::OPER_COMMUTATOR; i <= Operator::OPER_GREATER; i++)
+				for(i=Operator::OPER_COMMUTATOR; i <= Operator::OPER_NEGATOR; i++)
 				{
 					if(oper->getOperator(i))
 						getObjectDependecies(oper->getOperator(i), deps, inc_indirect_deps);
@@ -6024,7 +6336,7 @@ void DatabaseModel::getObjectDependecies(BaseObject *object, vector<BaseObject *
 				Trigger *trig=NULL;
 				Index *index=NULL;
 				Column *col=NULL;
-				unsigned count, count1, i, i1;
+				unsigned count, i, count1, i1;
 
 				count=tab->getColumnCount();
 				for(i=0; i < count; i++)
@@ -6040,6 +6352,17 @@ void DatabaseModel::getObjectDependecies(BaseObject *object, vector<BaseObject *
 				for(i=0; i < count; i++)
 				{
 					constr=dynamic_cast<Constraint *>(tab->getConstraint(i));
+					count1=constr->getExcludeElementCount();
+
+					for(i1=0; i1 < count1; i1++)
+					{
+						if(constr->getExcludeElement(i1).getOperator())
+							getObjectDependecies(constr->getExcludeElement(i1).getOperator(), deps, inc_indirect_deps);
+
+						if(constr->getExcludeElement(i1).getOperatorClass())
+							getObjectDependecies(constr->getExcludeElement(i1).getOperatorClass(), deps, inc_indirect_deps);
+					}
+
 					if(inc_indirect_deps &&
 						 !constr->isAddedByLinking() &&
 						 constr->getConstraintType()==ConstraintType::foreign_key)
@@ -6064,19 +6387,23 @@ void DatabaseModel::getObjectDependecies(BaseObject *object, vector<BaseObject *
 				for(i=0; i < count; i++)
 				{
 					index=dynamic_cast<Index *>(tab->getIndex(i));
-					count1=index->getElementCount();
+					count1=index->getIndexElementCount();
 
 					for(i1=0; i1 < count1; i1++)
 					{
-						if(index->getElement(i1).getOperatorClass())
-							getObjectDependecies(index->getElement(i1).getOperatorClass(), deps, inc_indirect_deps);
-						else if(index->getElement(i1).getColumn())
+						if(index->getIndexElement(i1).getOperatorClass())
+							getObjectDependecies(index->getIndexElement(i1).getOperatorClass(), deps, inc_indirect_deps);
+
+						if(index->getIndexElement(i1).getColumn())
 						{
-							usr_type=getObjectPgSQLType(index->getElement(i1).getColumn()->getType());
+							usr_type=getObjectPgSQLType(index->getIndexElement(i1).getColumn()->getType());
 
 							if(usr_type)
 								getObjectDependecies(usr_type, deps, inc_indirect_deps);
 						}
+
+						if(index->getIndexElement(i1).getCollation())
+							getObjectDependecies(index->getIndexElement(i1).getCollation(), deps, inc_indirect_deps);
 					}
 				}
 			}
@@ -6121,6 +6448,15 @@ void DatabaseModel::getObjectDependecies(BaseObject *object, vector<BaseObject *
 					if(view->getReference(i).getTable())
 						getObjectDependecies(view->getReference(i).getTable(), deps, inc_indirect_deps);
 				}
+
+				for(i=0; i < view->getTriggerCount(); i++)
+					getObjectDependecies(view->getTrigger(i), deps, inc_indirect_deps);
+
+				for(i=0; i < view->getTriggerCount(); i++)
+				{
+					if(view->getTrigger(i)->getReferencedTable())
+						getObjectDependecies(view->getTrigger(i)->getReferencedTable(), deps, inc_indirect_deps);
+				}
 			}
 		}
 	}
@@ -6132,10 +6468,27 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 
 	if(object)
 	{
+		vector<BaseObject *>::iterator itr_perm, itr_perm_end;
 		ObjectType obj_type=object->getObjectType();
 		bool refer=false;
+		Permission *perm=NULL;
 
-		if(obj_type==OBJ_TABLE)
+		//Get the permissions thata references the object
+		itr_perm=permissions.begin();
+		itr_perm_end=permissions.end();
+
+		while(itr_perm!=itr_perm_end && (!exclusion_mode || (exclusion_mode && !refer)))
+		{
+			perm=dynamic_cast<Permission *>(*itr_perm);
+			if(perm->getObject()==object)
+			{
+				refer=true;
+				refs.push_back(perm);
+			}
+			itr_perm++;
+		}
+
+		if(obj_type==OBJ_TABLE && (!exclusion_mode || (exclusion_mode && !refer)))
 		{
 			Table *table=dynamic_cast<Table *>(object);
 			Sequence *seq=NULL;
@@ -6231,7 +6584,7 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 			}
 		}
 
-		if(obj_type==OBJ_FUNCTION)
+		if(obj_type==OBJ_FUNCTION && (!exclusion_mode || (exclusion_mode && !refer)))
 		{
 			Function *func=dynamic_cast<Function *>(object);
 			vector<BaseObject *> *obj_list=NULL;
@@ -6300,7 +6653,7 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 
 						if(oper->getFunction(Operator::FUNC_OPERATOR)==func ||
 							 oper->getFunction(Operator::FUNC_JOIN)==func  ||
-							 oper->getFunction(Operator::FUNC_RESTRICTION)==func)
+							 oper->getFunction(Operator::FUNC_RESTRICT)==func)
 						{
 							refer=true;
 							refs.push_back(oper);
@@ -6364,7 +6717,7 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 			}
 		}
 
-		if(obj_type==OBJ_SCHEMA)
+		if(obj_type==OBJ_SCHEMA && (!exclusion_mode || (exclusion_mode && !refer)))
 		{
 			vector<BaseObject *> *obj_list=NULL;
 			vector<BaseObject *>::iterator itr, itr_end;
@@ -6392,15 +6745,16 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 			}
 		}
 
-		if(obj_type==OBJ_TYPE || obj_type==OBJ_DOMAIN ||
-			 obj_type==OBJ_SEQUENCE || obj_type==OBJ_TABLE)
+		if((obj_type==OBJ_TYPE || obj_type==OBJ_DOMAIN || obj_type==OBJ_SEQUENCE ||
+				obj_type==OBJ_TABLE || obj_type==OBJ_EXTENSION)
+			 && (!exclusion_mode || (exclusion_mode && !refer)))
 		{
 			vector<BaseObject *> *obj_list=NULL;
 			vector<BaseObject *>::iterator itr, itr_end;
 			ObjectType obj_types[]={OBJ_TABLE, OBJ_OPCLASS, OBJ_CAST,
 															OBJ_DOMAIN, OBJ_FUNCTION, OBJ_AGGREGATE,
-															OBJ_OPERATOR, OBJ_TYPE };
-			unsigned i, i1, count;
+															OBJ_OPERATOR, OBJ_TYPE, OBJ_RELATIONSHIP };
+			unsigned i, i1, count, tp_count = sizeof(obj_types)/sizeof(ObjectType);
 			OperatorClass *op_class=NULL;
 			Table *tab=NULL;
 			Column *col=NULL;
@@ -6410,6 +6764,7 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 			Aggregate *aggreg=NULL;
 			Operator *oper=NULL;
 			Type *type=NULL;
+			Relationship *rel=NULL;
 			void *ptr_pgsqltype=NULL;
 
 			switch(obj_type)
@@ -6417,16 +6772,40 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 				case OBJ_TYPE: ptr_pgsqltype=dynamic_cast<Type*>(object); break;
 				case OBJ_DOMAIN: ptr_pgsqltype=dynamic_cast<Domain*>(object); break;
 				case OBJ_SEQUENCE: ptr_pgsqltype=dynamic_cast<Sequence*>(object); break;
+				case OBJ_EXTENSION: ptr_pgsqltype=dynamic_cast<Extension*>(object); break;
 				default: ptr_pgsqltype=dynamic_cast<Table*>(object); break;
 			}
 
-			for(i=0; i < 8 && (!exclusion_mode || (exclusion_mode && !refer)); i++)
+			for(i=0; i < tp_count && (!exclusion_mode || (exclusion_mode && !refer)); i++)
 			{
 				obj_list=getObjectList(obj_types[i]);
 				itr=obj_list->begin();
 				itr_end=obj_list->end();
 
-				if(obj_types[i]==OBJ_TABLE)
+				if(obj_types[i]==OBJ_RELATIONSHIP)
+				{
+					bool added;
+
+					while(itr!=itr_end && (!exclusion_mode || (exclusion_mode && !refer)))
+					{
+						added=false;
+						rel=dynamic_cast<Relationship *>(*itr);
+						itr++;
+
+						count=rel->getAttributeCount();
+						for(i1=0; i1 < count && !added; i1++)
+						{
+							col=rel->getAttribute(i1);
+
+							if(col->getType()==object)
+							{
+								added=refer=true;
+								refs.push_back(rel);
+							}
+						}
+					}
+				}
+				else if(obj_types[i]==OBJ_TABLE)
 				{
 					while(itr!=itr_end && (!exclusion_mode || (exclusion_mode && !refer)))
 					{
@@ -6438,7 +6817,7 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 						{
 							col=tab->getColumn(i1);
 
-							if(col->getType()==object)
+							if(!col->isAddedByRelationship() && col->getType()==object)
 							{
 								refer=true;
 								refs.push_back(col);
@@ -6567,7 +6946,7 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 			}
 		}
 
-		if(obj_type==OBJ_ROLE)
+		if(obj_type==OBJ_ROLE && (!exclusion_mode || (exclusion_mode && !refer)))
 		{
 			vector<BaseObject *> *obj_list=NULL;
 			vector<BaseObject *>::iterator itr, itr_end;
@@ -6628,7 +7007,7 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 			}
 		}
 
-		if(obj_type==OBJ_TABLESPACE)
+		if(obj_type==OBJ_TABLESPACE && (!exclusion_mode || (exclusion_mode && !refer)))
 		{
 			vector<BaseObject *>::iterator itr, itr_end;
 			unsigned i, count;
@@ -6681,7 +7060,7 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 			}
 		}
 
-		if(obj_type==OBJ_LANGUAGE)
+		if(obj_type==OBJ_LANGUAGE && (!exclusion_mode || (exclusion_mode && !refer)))
 		{
 			vector<BaseObject *>::iterator itr, itr_end;
 			Function *func=NULL;
@@ -6701,7 +7080,7 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 			}
 		}
 
-		if(obj_type==OBJ_OPERATOR)
+		if(obj_type==OBJ_OPERATOR && (!exclusion_mode || (exclusion_mode && !refer)))
 		{
 			vector<BaseObject *> *obj_list=NULL;
 			vector<BaseObject *>::iterator itr, itr_end;
@@ -6755,7 +7134,7 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 						oper_aux=dynamic_cast<Operator *>(*itr);
 						itr++;
 
-						for(i1=Operator::OPER_COMMUTATOR; i1 <= Operator::OPER_GREATER &&
+						for(i1=Operator::OPER_COMMUTATOR; i1 <= Operator::OPER_NEGATOR &&
 								(!exclusion_mode || (exclusion_mode && !refer)); i1++)
 						{
 							if(oper_aux->getOperator(i1)==oper)
@@ -6769,7 +7148,7 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 			}
 		}
 
-		if(obj_type==OBJ_OPFAMILY)
+		if(obj_type==OBJ_OPFAMILY && (!exclusion_mode || (exclusion_mode && !refer)))
 		{
 			vector<BaseObject *>::iterator itr, itr_end;
 			OperatorFamily *op_family=dynamic_cast<OperatorFamily *>(object);
@@ -6788,7 +7167,67 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 			}
 		}
 
-		if(obj_type==OBJ_COLUMN)
+		if(obj_type==OBJ_COLLATION && (!exclusion_mode || (exclusion_mode && !refer)))
+		{
+			ObjectType  obj_types[]={ OBJ_DOMAIN, OBJ_COLLATION, OBJ_TYPE },
+									tab_obj_types[]={ OBJ_COLUMN, OBJ_INDEX };
+			unsigned i, count;
+			vector<BaseObject *> *obj_list=NULL;
+			vector<BaseObject *>::iterator itr, itr_end;
+			vector<TableObject *> *tab_obj_list=NULL;
+			vector<TableObject *>::iterator tab_itr, tab_itr_end;
+			TableObject *tab_obj=NULL;
+
+			count=sizeof(obj_types)/sizeof(ObjectType);
+			for(i=0; i < count && (!exclusion_mode || (exclusion_mode && !refer)); i++)
+			{
+				obj_list=getObjectList(obj_types[i]);
+				itr=obj_list->begin();
+				itr_end=obj_list->end();
+
+				while(itr!=itr_end && (!exclusion_mode || (exclusion_mode && !refer)))
+				{
+					if((*itr)->getCollation()==object)
+					{
+						refer=true;
+						refs.push_back(*itr);
+					}
+
+					itr++;
+				}
+			}
+
+			count=sizeof(tab_obj_types)/sizeof(ObjectType);
+			obj_list=getObjectList(OBJ_TABLE);
+			itr=obj_list->begin();
+			itr_end=obj_list->end();
+
+			while(itr!=itr_end && (!exclusion_mode || (exclusion_mode && !refer)))
+			{
+				for(i=0; i < count && (!exclusion_mode || (exclusion_mode && !refer)); i++)
+				{
+					tab_obj_list=dynamic_cast<Table *>(*itr)->getObjectList(tab_obj_types[i]);
+					tab_itr=tab_obj_list->begin();
+					tab_itr_end=tab_obj_list->end();
+
+					while(tab_itr!=tab_itr_end && (!exclusion_mode || (exclusion_mode && !refer)))
+					{
+						tab_obj=(*tab_itr);
+						if((tab_obj->getObjectType()==OBJ_COLUMN && tab_obj->getCollation()==object) ||
+							 (tab_obj->getObjectType()==OBJ_INDEX &&
+								dynamic_cast<Index *>(tab_obj)->isReferCollation(dynamic_cast<Collation *>(object))))
+						{
+							refer=true;
+							refs.push_back(*tab_itr);
+						}
+						tab_itr++;
+					}
+				}
+				itr++;
+			}
+		}
+
+		if(obj_type==OBJ_COLUMN && (!exclusion_mode || (exclusion_mode && !refer)))
 		{
 			Column *column=dynamic_cast<Column *>(object);
 			vector<BaseObject *> *obj_list=NULL;
@@ -6819,12 +7258,14 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 						constr_cnt=tab->getConstraintCount();
 						for(idx=0; idx < constr_cnt && (!exclusion_mode || (exclusion_mode && !refer)); idx++)
 						{
-							if(tab->getConstraint(idx)->isColumnExists(column, Constraint::SOURCE_COLS) ||
-								 tab->getConstraint(idx)->isColumnExists(column, Constraint::REFERENCED_COLS))
+							/*if(tab->getConstraint(idx)->isColumnExists(column, Constraint::SOURCE_COLS) ||
+								 tab->getConstraint(idx)->isColumnExists(column, Constraint::REFERENCED_COLS))*/
+							if(tab->getConstraint(idx)->isColumnReferenced(column))
 							{
 								refer=true;
 								refs.push_back(tab->getConstraint(idx));
 							}
+
 						}
 
 						trig_cnt=tab->getTriggerCount();
@@ -6851,8 +7292,9 @@ void DatabaseModel::getObjectReferences(BaseObject *object, vector<BaseObject *>
 						constr_cnt=rel->getConstraintCount();
 						for(idx=0; idx < constr_cnt && (!exclusion_mode || (exclusion_mode && !refer)); idx++)
 						{
-							if(rel->getConstraint(idx)->isColumnExists(column, Constraint::SOURCE_COLS) ||
-								 rel->getConstraint(idx)->isColumnExists(column, Constraint::REFERENCED_COLS))
+							/* if(rel->getConstraint(idx)->isColumnExists(column, Constraint::SOURCE_COLS) ||
+								 rel->getConstraint(idx)->isColumnExists(column, Constraint::REFERENCED_COLS)) */
+							if(rel->getConstraint(idx)->isColumnReferenced(column))
 							{
 								refer=true;
 								refs.push_back(rel);
@@ -6909,23 +7351,31 @@ BaseObject *DatabaseModel::getObjectPgSQLType(PgSQLType type)
 	switch(type.getUserTypeConfig())
 	{
 		case UserTypeConfig::BASE_TYPE:
-		return(this->getObject(*type, OBJ_TYPE));
+			return(this->getObject(*type, OBJ_TYPE));
 		break;
 
 		case UserTypeConfig::DOMAIN_TYPE:
-		return(this->getObject(*type, OBJ_DOMAIN));
+			return(this->getObject(*type, OBJ_DOMAIN));
 		break;
 
 		case UserTypeConfig::TABLE_TYPE:
-		return(this->getObject(*type, OBJ_TABLE));
+			return(this->getObject(*type, OBJ_TABLE));
+		break;
+
+		case UserTypeConfig::VIEW_TYPE:
+			return(this->getObject(*type, OBJ_VIEW));
 		break;
 
 		case UserTypeConfig::SEQUENCE_TYPE:
-		return(this->getObject(*type, OBJ_SEQUENCE));
+			return(this->getObject(*type, OBJ_SEQUENCE));
+		break;
+
+		case UserTypeConfig::EXTENSION_TYPE:
+			return(this->getObject(*type, OBJ_EXTENSION));
 		break;
 
 		default:
-		return(NULL);
+			return(NULL);
 		break;
 	}
 }
@@ -6972,5 +7422,36 @@ void DatabaseModel::validateSchemaRenaming(Schema *schema, const QString &prev_s
 			dynamic_cast<BaseGraphicObject *>(obj)->setModified(true);
 
 		list.pop_back();
+	}
+}
+
+
+void DatabaseModel::createSystemObjects(bool create_public)
+{
+	Schema *public_sch=NULL;
+	Language *lang=NULL;
+	LanguageType lang_types[]={ LanguageType::c, LanguageType::sql, LanguageType::plpgsql };
+
+
+	/* The particular case is for public schema that is created only when the flag
+	is set. This because the public schema is written on model file even being
+	a system object. This strategy permits the user controls the schema rectangle behavior */
+	if(create_public && getObjectIndex("public", OBJ_SCHEMA) < 0)
+	{
+		public_sch=new Schema;
+		public_sch->setName("public");
+		public_sch->setSystemObject(true);
+		addObject(public_sch);
+	}
+
+	for(unsigned i=0; i < sizeof(lang_types)/sizeof(LanguageType); i++)
+	{
+		if(getObjectIndex(~LanguageType(lang_types[i]), OBJ_LANGUAGE) < 0)
+		{
+			lang=new Language;
+			lang->BaseObject::setName(~LanguageType(lang_types[i]));
+			lang->setSystemObject(true);
+			addObject(lang);
+		}
 	}
 }

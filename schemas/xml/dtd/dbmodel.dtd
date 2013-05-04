@@ -46,7 +46,10 @@
 %relationship;
 <!ENTITY % permission SYSTEM "permission.dtd">
 %permission;
-
+<!ENTITY % collation SYSTEM "collation.dtd">
+%collation;
+<!ENTITY % extension SYSTEM "extension.dtd">
+%extension;
 
 <!ELEMENT dbmodel ANY>
 

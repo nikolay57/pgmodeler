@@ -266,7 +266,7 @@ void ObjectsScene::addItem(QGraphicsItem *item)
 	if(item)
 	{
 		RelationshipView *rel=dynamic_cast<RelationshipView *>(item);
-		TableView *tab=dynamic_cast<TableView *>(item);
+		BaseTableView *tab=dynamic_cast<BaseTableView *>(item);
 		BaseObjectView *obj=dynamic_cast<BaseObjectView *>(item);
 
 		if(rel)
@@ -277,8 +277,10 @@ void ObjectsScene::addItem(QGraphicsItem *item)
 							this, SLOT(emitChildObjectSelection(TableObject*)));
 
 		if(obj)
+		{
 			connect(obj, SIGNAL(s_objectSelected(BaseGraphicObject*,bool)),
 							this, SLOT(emitObjectSelection(BaseGraphicObject*,bool)));
+		}
 
 		QGraphicsScene::addItem(item);
 	}
@@ -290,7 +292,7 @@ void ObjectsScene::removeItem(QGraphicsItem *item)
 	{
 		BaseObjectView *object=dynamic_cast<BaseObjectView *>(item);
 		RelationshipView *rel=dynamic_cast<RelationshipView *>(item);
-		TableView *tab=dynamic_cast<TableView *>(item);
+		BaseTableView *tab=dynamic_cast<BaseTableView *>(item);
 
 		if(rel)
 		{

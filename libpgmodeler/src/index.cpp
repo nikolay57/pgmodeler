@@ -41,143 +41,152 @@ Index::Index(void)
 	attributes[ParsersAttributes::STORAGE_PARAMS]="";
 }
 
-void Index::setElementsAttribute(unsigned def_type)
+void Index::setIndexElementsAttribute(unsigned def_type)
 {
 	QString str_elem;
 	unsigned i, count;
 
-	count=elements.size();
+	count=idx_elements.size();
 	for(i=0; i < count; i++)
 	{
-		str_elem+=elements[i].getCodeDefinition(def_type);
+		str_elem+=idx_elements[i].getCodeDefinition(def_type);
 		if(i < (count-1) && def_type==SchemaParser::SQL_DEFINITION) str_elem+=",";
 	}
 
 	attributes[ParsersAttributes::ELEMENTS]=str_elem;
 }
 
-int Index::isElementExists(Column *column)
+int Index::getElementIndex(IndexElement elem)
 {
-	int count, idx;
-	Column *col=NULL;
+	int idx=0;
 	bool found=false;
 
-	idx=0;
-	count=elements.size();
-
-	while(idx < count && !found)
+	while(idx < static_cast<int>(idx_elements.size()) && !found)
 	{
-		col=elements[idx].getColumn();
-
-		if(col && column)
-			found=(col==column || col->getName()==column->getName());
-
+		found=(idx_elements[idx]==elem);
 		if(!found) idx++;
 	}
 
-	if(!found) idx=-1;
-	return(idx);
+	return(found ? idx : -1);
 }
 
-int Index::isElementExists(const QString &expr)
+void Index::addIndexElement(IndexElement elem)
 {
-	int count, idx;
-	bool found=false;
-
-	idx=0;
-	count=elements.size();
-
-	while(idx < count && !found)
-	{
-		found=(!expr.isEmpty() && elements[idx].getExpression()==expr);
-		if(!found) idx++;
-	}
-
-	if(!found) idx=-1;
-	return(idx);
-}
-
-void Index::addElement(IndexElement elem)
-{
-	if(elem.getColumn())
-	{
-		this->addElement(elem.getColumn(), elem.getOperatorClass(), elem.isSortingEnabled(),
-										 elem.getSortingAttribute(IndexElement::ASC_ORDER),elem.getSortingAttribute(IndexElement::NULLS_FIRST));
-	}
-	else
-	{
-		this->addElement(elem.getExpression(), elem.getOperatorClass(), elem.isSortingEnabled(),
-										 elem.getSortingAttribute(IndexElement::ASC_ORDER),elem.getSortingAttribute(IndexElement::NULLS_FIRST));
-	}
-}
-
-void Index::addElement(const QString &expr, OperatorClass *op_class, bool use_sorting, bool asc_order, bool nulls_first)
-{
-	//Raises an error if the expression is empty
-	if(expr.isEmpty())
-	{
+	if(getElementIndex(elem) >= 0)
+		throw Exception(ERR_INS_DUPLIC_ELEMENT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+	else if(elem.getExpression().isEmpty() && !elem.getColumn())
 		throw Exception(ERR_ASG_INV_EXPR_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-	}
-	else
+
+	idx_elements.push_back(elem);
+}
+
+void Index::addIndexElement(const QString &expr, Collation *coll, OperatorClass *op_class, bool use_sorting, bool asc_order, bool nulls_first)
+{
+	try
 	{
 		IndexElement elem;
 
-		//Case the expression exists on index
-		if(isElementExists(expr) >= 0)
-			throw Exception(ERR_INS_DUPLIC_ELEMENT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+		//Raises an error if the expression is empty
+		if(expr.isEmpty())
+			throw Exception(ERR_ASG_INV_EXPR_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 		//Configures the element
 		elem.setExpression(expr);
 		elem.setOperatorClass(op_class);
+		elem.setCollation(coll);
 		elem.setSortingEnabled(use_sorting);
 		elem.setSortingAttribute(IndexElement::NULLS_FIRST, nulls_first);
 		elem.setSortingAttribute(IndexElement::ASC_ORDER, asc_order);
 
-		elements.push_back(elem);
+		if(getElementIndex(elem) >= 0)
+			throw Exception(ERR_INS_DUPLIC_ELEMENT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+
+		idx_elements.push_back(elem);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
-void Index::addElement(Column *column, OperatorClass *op_class, bool use_sorting, bool asc_order, bool nulls_first)
+void Index::addIndexElement(Column *column, Collation *coll, OperatorClass *op_class, bool use_sorting, bool asc_order, bool nulls_first)
 {
-	//Case the column is not allocated raises an error
-	if(!column)
-	{
-		throw Exception(Exception::getErrorMessage(ERR_ASG_NOT_ALOC_COLUMN)
-										.arg(Utf8String::create(this->getName()))
-										.arg(BaseObject::getTypeName(OBJ_INDEX)),
-										ERR_ASG_NOT_ALOC_COLUMN,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-	}
-	else
+	try
 	{
 		IndexElement elem;
 
-		//Case the column exists on index
-		if(isElementExists(column) >= 0)
-			throw Exception(ERR_INS_DUPLIC_COLUMN,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+		//Case the column is not allocated raises an error
+		if(!column)
+			throw Exception(Exception::getErrorMessage(ERR_ASG_NOT_ALOC_COLUMN)
+											.arg(Utf8String::create(this->getName())).arg(Utf8String::create(this->getTypeName())),
+											ERR_ASG_NOT_ALOC_COLUMN, __PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 		//Configures the element
 		elem.setColumn(column);
 		elem.setOperatorClass(op_class);
+		elem.setCollation(coll);
 		elem.setSortingEnabled(use_sorting);
 		elem.setSortingAttribute(IndexElement::NULLS_FIRST, nulls_first);
 		elem.setSortingAttribute(IndexElement::ASC_ORDER, asc_order);
 
-		elements.push_back(elem);
+		if(getElementIndex(elem) >= 0)
+			throw Exception(ERR_INS_DUPLIC_ELEMENT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+
+		idx_elements.push_back(elem);
+	}
+	catch(Exception &e)
+	{
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
 }
 
-void Index::removeElement(unsigned idx_elem)
+void Index::addIndexElements(vector<IndexElement> &elems)
 {
-	//Case the element index is out of bound raises an error
-	if(idx_elem >= elements.size())
-		throw Exception(ERR_REF_ELEM_INV_INDEX,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+	vector<IndexElement> elems_bkp=idx_elements;
 
-	elements.erase(elements.begin() + idx_elem);
+	try
+	{
+		idx_elements.clear();
+
+		for(unsigned i=0; i < elems.size(); i++)
+			addIndexElement(elems[i]);
+	}
+	catch(Exception &e)
+	{
+		idx_elements = elems_bkp;
+		throw Exception(e.getErrorMessage(), e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
+	}
 }
 
-void Index::removeElements(void)
+void Index::removeIndexElement(unsigned idx_elem)
 {
-	elements.clear();
+	if(idx_elem >= idx_elements.size())
+		throw Exception(ERR_REF_ELEM_INV_INDEX,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+
+	idx_elements.erase(idx_elements.begin() + idx_elem);
+}
+
+void Index::removeIndexElements(void)
+{
+	idx_elements.clear();
+}
+
+IndexElement Index::getIndexElement(unsigned elem_idx)
+{
+	if(elem_idx >= idx_elements.size())
+		throw Exception(ERR_REF_ELEM_INV_INDEX,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+
+	return(idx_elements[elem_idx]);
+}
+
+vector<IndexElement> Index::getIndexElements(void)
+{
+	return(idx_elements);
+}
+
+unsigned Index::getIndexElementCount(void)
+{
+	return(idx_elements.size());
 }
 
 void Index::setIndexAttribute(unsigned attrib_id, bool value)
@@ -208,20 +217,6 @@ unsigned Index::getFillFactor(void)
 	return(fill_factor);
 }
 
-IndexElement Index::getElement(unsigned elem_idx)
-{
-	//Case the element index is out of bound raises an error
-	if(elem_idx >= elements.size())
-		throw Exception(ERR_REF_ELEM_INV_INDEX,__PRETTY_FUNCTION__,__FILE__,__LINE__);
-	else
-		return(elements[elem_idx]);
-}
-
-unsigned Index::getElementCount(void)
-{
-	return(elements.size());
-}
-
 bool Index::getIndexAttribute(unsigned attrib_id)
 {
 	if(attrib_id > FAST_UPDATE)
@@ -246,10 +241,10 @@ bool Index::isReferRelationshipAddedColumn(void)
 	Column *col=NULL;
 	bool found=false;
 
-	itr=elements.begin();
-	itr_end=elements.end();
+	itr=idx_elements.begin();
+	itr_end=idx_elements.end();
 
-	//Checks if some o the elements (columns) is added by relationship
+	//Checks if some of the elements if referencing columns added by relationship
 	while(itr!=itr_end && !found)
 	{
 		col=(*itr).getColumn();
@@ -260,9 +255,27 @@ bool Index::isReferRelationshipAddedColumn(void)
 	return(found);
 }
 
+bool Index::isReferCollation(Collation *collation)
+{
+	vector<IndexElement>::iterator itr, itr_end;
+	bool found=false;
+
+	itr=idx_elements.begin();
+	itr_end=idx_elements.end();
+
+	//Checks if some of the elements is referencing the collation
+	while(itr!=itr_end && !found)
+	{
+		found=(collation && (*itr).getCollation());
+		itr++;
+	}
+
+	return(found);
+}
+
 QString Index::getCodeDefinition(unsigned tipo_def)
 {
-	setElementsAttribute(tipo_def);
+	setIndexElementsAttribute(tipo_def);
 	attributes[ParsersAttributes::UNIQUE]=(index_attribs[UNIQUE] ? "1" : "");
 	attributes[ParsersAttributes::CONCURRENT]=(index_attribs[CONCURRENT] ? "1" : "");
 	attributes[ParsersAttributes::INDEX_TYPE]=(~indexing_type);

@@ -19,6 +19,11 @@
   %if @{protected} %then 
    [ protected=] "true"
   %end
+
+  %if @{sql-disabled} %then
+   [ sql-disabled=] "true"
+  %end
+
   > $br
 
   @{schema}
@@ -30,12 +35,7 @@
 
 
   %if @{commutator-op} %then @{commutator-op} %end
-  %if @{greater-op} %then @{greater-op} %end
-  %if @{less-op} %then @{less-op} %end
   %if @{negator-op} %then @{negator-op} %end
-  %if @{sort-op} %then @{sort-op} %end
-  %if @{sort2-op} %then @{sort2-op} %end
-
   %if @{operfunc} %then @{operfunc} %end
   %if @{join} %then @{join} %end
   %if @{restriction} %then @{restriction} %end

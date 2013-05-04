@@ -17,6 +17,9 @@
 <!ATTLIST relationship identifier (false|true) "false">
 <!ATTLIST relationship deferrable (true |false) "false">
 <!ATTLIST relationship defer-type CDATA #IMPLIED>
+<!ATTLIST relationship copy-mode CDATA #IMPLIED>
+<!ATTLIST relationship copy-options CDATA #IMPLIED>
+<!ATTLIST relationship sql-disabled (false|true) "false">
  
 <!ELEMENT line (position+)>
 

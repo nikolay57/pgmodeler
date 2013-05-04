@@ -18,25 +18,25 @@
 
 #include "modelobjectswidget.h"
 
-ModelObjectsWidget::ModelObjectsWidget(bool simplified_view, QWidget *parent, Qt::WindowFlags f) : QDockWidget(parent, f)
+ModelObjectsWidget::ModelObjectsWidget(bool simplified_view, QWidget *parent) : QWidget(parent)
 {
 	ObjectType type[]={  OBJ_DATABASE, OBJ_TABLE, OBJ_FUNCTION, OBJ_VIEW, OBJ_DOMAIN,
 												OBJ_SCHEMA, OBJ_AGGREGATE, OBJ_OPERATOR, OBJ_SEQUENCE,
 												OBJ_ROLE, OBJ_CONVERSION, OBJ_CAST, OBJ_LANGUAGE,
 												OBJ_TYPE, OBJ_TABLESPACE, OBJ_OPFAMILY, OBJ_OPCLASS,
 												OBJ_RELATIONSHIP, OBJ_TEXTBOX, OBJ_COLUMN, OBJ_CONSTRAINT,
-												OBJ_TRIGGER, OBJ_INDEX, OBJ_RULE };
+												OBJ_TRIGGER, OBJ_INDEX, OBJ_RULE, OBJ_COLLATION, OBJ_EXTENSION };
 	int type_id, type_count=sizeof(type)/sizeof(ObjectType);
 	QListWidgetItem *item=NULL;
 	QPixmap icon;
 	QString str_aux;
 
 	setupUi(this);
-
 	model_wgt=NULL;
 	db_model=NULL;
-	this->setModel(db_model);
+	setModel(db_model);
 
+	title_wgt->setVisible(!simplified_view);
 	this->simplified_view=simplified_view;
 	this->save_tree_state=!simplified_view;
 
@@ -73,6 +73,8 @@ ModelObjectsWidget::ModelObjectsWidget(bool simplified_view, QWidget *parent, Qt
 
 	connect(objectstree_tw,SIGNAL(itemPressed(QTreeWidgetItem*,int)),this, SLOT(selectObject(void)));
 	connect(objectslist_tbw,SIGNAL(itemPressed(QTableWidgetItem*)),this, SLOT(selectObject(void)));
+	connect(expand_all_tb, SIGNAL(clicked(void)), objectstree_tw, SLOT(expandAll(void)));
+	connect(collapse_all_tb, SIGNAL(clicked(void)), this, SLOT(collapseAll(void)));
 
 	if(!simplified_view)
 	{
@@ -84,15 +86,12 @@ ModelObjectsWidget::ModelObjectsWidget(bool simplified_view, QWidget *parent, Qt
 		connect(clear_all_tb,SIGNAL(clicked(bool)), this, SLOT(setAllObjectsVisible(bool)));
 		connect(objectstree_tw,SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),this, SLOT(editObject(void)));
 		connect(objectslist_tbw,SIGNAL(itemDoubleClicked(QTableWidgetItem*)),this, SLOT(editObject(void)));
+		connect(hide_tb, SIGNAL(clicked(bool)), this, SLOT(hide(void)));
 	}
 	else
 	{
 		setWindowModality(Qt::ApplicationModal);
-		setAllowedAreas(Qt::NoDockWidgetArea);
 		setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::WindowStaysOnTopHint | Qt::WindowTitleHint);
-		setFeatures(QDockWidget::DockWidgetClosable);
-		setFloating(true);
-
 		connect(objectstree_tw,SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),this, SLOT(close(void)));
 		connect(objectslist_tbw,SIGNAL(itemDoubleClicked(QTableWidgetItem*)),this, SLOT(close(void)));
 		connect(select_tb,SIGNAL(clicked(void)),this,SLOT(close(void)));
@@ -102,6 +101,13 @@ ModelObjectsWidget::ModelObjectsWidget(bool simplified_view, QWidget *parent, Qt
 	connect(tree_view_tb,SIGNAL(clicked(void)),this,SLOT(changeObjectsView(void)));
 	connect(list_view_tb,SIGNAL(clicked(void)),this,SLOT(changeObjectsView(void)));
 }
+
+void ModelObjectsWidget::hide(void)
+{
+	QWidget::hide();
+	emit s_visibilityChanged(false);
+}
+
 
 void ModelObjectsWidget::showObjectMenu(void)
 {
@@ -167,7 +173,6 @@ void ModelObjectsWidget::selectObject(void)
 		vect.push_back(selected_object);
 		model_wgt->scene->clearSelection();
 		model_wgt->configurePopupMenu(vect);
-
 		showObjectMenu();
 	}
 }
@@ -191,10 +196,7 @@ void ModelObjectsWidget::setObjectVisible(ObjectType obj_type, bool visible)
 			 obj_type==OBJ_TRIGGER || obj_type==OBJ_INDEX)
 			visible_objs_map[OBJ_TABLE]=visible_objs_map[OBJ_SCHEMA]=true;
 
-		if(obj_type==OBJ_TABLE || obj_type==OBJ_VIEW || obj_type==OBJ_FUNCTION ||
-			 obj_type==OBJ_AGGREGATE || obj_type==OBJ_DOMAIN || obj_type==OBJ_TYPE ||
-			 obj_type==OBJ_CONVERSION || obj_type==OBJ_OPERATOR || obj_type==OBJ_OPFAMILY ||
-			 obj_type==OBJ_OPCLASS || obj_type==OBJ_SEQUENCE)
+		if(BaseObject::acceptsSchema(obj_type))
 			visible_objs_map[OBJ_SCHEMA]=true;
 	}
 }
@@ -269,6 +271,18 @@ void ModelObjectsWidget::changeObjectsView(void)
 		if(!options_tb->isChecked())
 			splitter->restoreState(widgets_conf.value("splitterSize").toByteArray());
 	}
+
+	expand_all_tb->setEnabled(tree_view_tb->isChecked());
+	collapse_all_tb->setEnabled(tree_view_tb->isChecked());
+}
+
+void ModelObjectsWidget::collapseAll(void)
+{
+	QTreeWidgetItem *root=objectstree_tw->topLevelItem(0);
+	objectstree_tw->collapseAll();
+
+	if(root)
+		root->setExpanded(true);
 }
 
 void ModelObjectsWidget::updateObjectsView(void)
@@ -288,6 +302,7 @@ void ModelObjectsWidget::updateObjectsList(void)
 		TableObject *tab_object=NULL;
 		QTableWidgetItem *tab_item=NULL, *tab_item1=NULL;
 		Table *table=NULL;
+		View *view=NULL;
 		Function *func=NULL;
 		Operator *oper=NULL;
 		QPixmap icon;
@@ -299,12 +314,14 @@ void ModelObjectsWidget::updateObjectsList(void)
 													OBJ_SCHEMA, OBJ_AGGREGATE, OBJ_OPERATOR, OBJ_SEQUENCE,
 													OBJ_ROLE, OBJ_CONVERSION, OBJ_CAST, OBJ_LANGUAGE,
 													OBJ_TYPE, OBJ_TABLESPACE, OBJ_OPFAMILY, OBJ_OPCLASS,
-													OBJ_RELATIONSHIP, OBJ_TEXTBOX },
-				subtypes[]={ OBJ_COLUMN, OBJ_CONSTRAINT,
-										 OBJ_TRIGGER, OBJ_INDEX, OBJ_RULE };
+													OBJ_RELATIONSHIP, OBJ_TEXTBOX, OBJ_COLLATION, OBJ_EXTENSION },
+				tab_stypes[]={ OBJ_COLUMN, OBJ_CONSTRAINT,
+											 OBJ_TRIGGER, OBJ_INDEX, OBJ_RULE },
+				view_stypes[]={ OBJ_TRIGGER, OBJ_RULE };
 
 		int type_cnt=sizeof(types)/sizeof(ObjectType),
-				subtype_cnt=sizeof(subtypes)/sizeof(ObjectType),
+				tab_stypes_cnt=sizeof(tab_stypes)/sizeof(ObjectType),
+				view_stypes_cnt=sizeof(view_stypes)/sizeof(ObjectType),
 				type_id, count, count1, idx, tab_id;
 
 		try
@@ -452,6 +469,8 @@ void ModelObjectsWidget::updateObjectsList(void)
 						case OBJ_CONVERSION:
 						case OBJ_TYPE:
 						case OBJ_OPFAMILY:
+						case OBJ_EXTENSION:
+						case OBJ_COLLATION:
 						case OBJ_OPCLASS:
 							//Creating the schema icon
 							icon=QPixmap(QString(":/icones/icones/") +
@@ -494,15 +513,15 @@ void ModelObjectsWidget::updateObjectsList(void)
 			{
 				table=dynamic_cast<Table *>(db_model->getTable(tab_id));
 
-				for(type_id=0; type_id < subtype_cnt; type_id++)
+				for(type_id=0; type_id < tab_stypes_cnt; type_id++)
 				{
 					//Get the current table object count
-					count1=table->getObjectCount(subtypes[type_id]);
+					count1=table->getObjectCount(tab_stypes[type_id]);
 
-					for(idx=0; visible_objs_map[subtypes[type_id]] && idx < count1; idx++)
+					for(idx=0; visible_objs_map[tab_stypes[type_id]] && idx < count1; idx++)
 					{
 						objectslist_tbw->insertRow(idx);
-						tab_object=dynamic_cast<TableObject *>(table->getObject(idx, subtypes[type_id]));
+						tab_object=dynamic_cast<TableObject *>(table->getObject(idx, tab_stypes[type_id]));
 
 						//Creating the item for object name
 						tab_item=new QTableWidgetItem;
@@ -574,6 +593,86 @@ void ModelObjectsWidget::updateObjectsList(void)
 					}
 				}
 			}
+
+			//Inserting the view objects (triggers, rules) onto the list
+			count=db_model->getObjectCount(OBJ_VIEW);
+
+			for(tab_id=0; tab_id < count; tab_id++)
+			{
+				view=dynamic_cast<View *>(db_model->getView(tab_id));
+
+				for(type_id=0; type_id < view_stypes_cnt; type_id++)
+				{
+					//Get the current table object count
+					count1=view->getObjectCount(view_stypes[type_id]);
+
+					for(idx=0; visible_objs_map[view_stypes[type_id]] && idx < count1; idx++)
+					{
+						objectslist_tbw->insertRow(idx);
+						tab_object=dynamic_cast<TableObject *>(view->getObject(idx, view_stypes[type_id]));
+
+						//Creating the item for object name
+						tab_item=new QTableWidgetItem;
+						objectslist_tbw->setItem(idx, 0, tab_item);
+						tab_item->setText(Utf8String::create(tab_object->getName()));
+						tab_item->setToolTip(Utf8String::create(tab_object->getName()));
+						tab_item->setData(Qt::UserRole, generateItemValue(tab_object));
+
+						if(tab_object->isProtected())
+						{
+							font=tab_item->font();
+							font.setItalic(true);
+							tab_item->setFont(font);
+							tab_item->setForeground(BaseObjectView::getFontStyle(ParsersAttributes::PROT_COLUMN).foreground());
+						}
+
+						//Creating the item that describes the object type
+						tab_item=new QTableWidgetItem;
+						icon=QPixmap(QString(":/icones/icones/") +
+													QString(BaseObject::getSchemaName(tab_object->getObjectType())) +
+													QString(".png"));
+						objectslist_tbw->setItem(idx, 1, tab_item);
+						tab_item->setText(Utf8String::create(tab_object->getTypeName()));
+						tab_item->setIcon(icon);
+						font=tab_item->font();
+						font.setItalic(true);
+						tab_item->setFont(font);
+						tab_item->setData(Qt::UserRole, generateItemValue(tab_object));
+
+
+						//Creating the item that describes the object parent
+						tab_item=new QTableWidgetItem;
+						tab_item1=new QTableWidgetItem;
+						font=tab_item1->font();
+						font.setItalic(true);
+						tab_item1->setFont(font);
+						tab_item1->setData(Qt::UserRole, generateItemValue(tab_object));
+
+						//Changing the parent item descriptor if the parent object is protected
+						if(view->isProtected())
+						{
+							font=tab_item->font();
+							font.setItalic(true);
+							tab_item->setFont(font);
+							tab_item->setForeground(BaseObjectView::getFontStyle(ParsersAttributes::PROT_COLUMN).foreground());
+						}
+
+						objectslist_tbw->setItem(idx, 2, tab_item);
+						objectslist_tbw->setItem(idx, 3, tab_item1);
+						tab_item->setText(Utf8String::create(table->getName()));
+						tab_item->setData(Qt::UserRole, generateItemValue(tab_object));
+
+						icon=QPixmap(QString(":/icones/icones/") +
+													QString(BaseObject::getSchemaName(OBJ_VIEW)) +
+													QString(".png"));
+
+						tab_item1->setIcon(icon);
+						tab_item1->setText(Utf8String::create(BaseObject::getTypeName(OBJ_VIEW)));
+						tab_item1->setData(Qt::UserRole, generateItemValue(tab_object));
+					}
+				}
+			}
+
 			objectslist_tbw->setSortingEnabled(true);
 		}
 		catch(Exception &e)
@@ -583,7 +682,7 @@ void ModelObjectsWidget::updateObjectsList(void)
 	}
 }
 
-void ModelObjectsWidget::updatedSchemaTree(QTreeWidgetItem *root)
+void ModelObjectsWidget::updateSchemaTree(QTreeWidgetItem *root)
 {
 	if(db_model && visible_objs_map[OBJ_SCHEMA])
 	{
@@ -593,10 +692,10 @@ void ModelObjectsWidget::updatedSchemaTree(QTreeWidgetItem *root)
 		vector<BaseObject *> obj_list;
 		QFont font;
 		QTreeWidgetItem *item=NULL, *item1=NULL, *item2=NULL, *item3=NULL, *item4=NULL;
-		ObjectType types[]={ OBJ_VIEW, OBJ_FUNCTION, OBJ_AGGREGATE,
+		ObjectType types[]={ OBJ_FUNCTION, OBJ_AGGREGATE,
 												 OBJ_DOMAIN, OBJ_TYPE, OBJ_CONVERSION,
 												 OBJ_OPERATOR, OBJ_OPFAMILY, OBJ_OPCLASS,
-												 OBJ_SEQUENCE };
+												 OBJ_SEQUENCE, OBJ_COLLATION, OBJ_EXTENSION };
 		int count, count2, type_cnt=sizeof(types)/sizeof(ObjectType), i, i1, i2;
 
 		QPixmap sch_icon=QPixmap(QString(":/icones/icones/") +
@@ -653,6 +752,9 @@ void ModelObjectsWidget::updatedSchemaTree(QTreeWidgetItem *root)
 
 				//Updates the table subtree for the current schema
 				updateTableTree(item2, schema);
+
+				//Updates the view subtree for the current schema
+				updateViewTree(item2, schema);
 
 				//Creates the object group at schema level (function, domain, sequences, etc)
 				for(i1=0; i1 < type_cnt; i1++)
@@ -831,13 +933,15 @@ void ModelObjectsWidget::updateTableTree(QTreeWidgetItem *root, BaseObject *sche
 								case OBJ_CONSTRAINT:
 									constr_type=dynamic_cast<Constraint *>(object)->getConstraintType();
 									if(constr_type==ConstraintType::primary_key)
-										str_aux="_pk";
+										str_aux=QString("_%1").arg(TableObjectView::TXT_PRIMARY_KEY);
 									else if(constr_type==ConstraintType::foreign_key)
-										str_aux="_fk";
+										str_aux=QString("_%1").arg(TableObjectView::TXT_FOREIGN_KEY);
 									else if(constr_type==ConstraintType::check)
-										str_aux="_ck";
+										str_aux=QString("_%1").arg(TableObjectView::TXT_CHECK);
 									else if(constr_type==ConstraintType::unique)
-										str_aux="_uq";
+										str_aux=QString("_%1").arg(TableObjectView::TXT_UNIQUE);
+									else if(constr_type==ConstraintType::exclude)
+										str_aux=QString("_%1").arg(TableObjectView::TXT_EXCLUDE);
 								break;
 
 								default:
@@ -847,6 +951,108 @@ void ModelObjectsWidget::updateTableTree(QTreeWidgetItem *root, BaseObject *sche
 
 							str_aux=QString(BaseObject::getSchemaName(types[i1])) + str_aux;
 							item3->setIcon(0,QPixmap(QString(":/icones/icones/") + str_aux + QString(".png")));
+						}
+					}
+				}
+			}
+		}
+		catch(Exception &e)
+		{
+			throw Exception(e.getErrorMessage(),e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
+		}
+	}
+}
+
+void ModelObjectsWidget::updateViewTree(QTreeWidgetItem *root, BaseObject *schema)
+{
+	if(db_model && visible_objs_map[OBJ_VIEW])
+	{
+		BaseObject *object=NULL;
+		vector<BaseObject *> obj_list;
+		View *view=NULL;
+		QTreeWidgetItem *item=NULL, *item1=NULL, *item2=NULL, *item3=NULL;
+		QFont font;
+		ObjectType types[]={ OBJ_RULE, OBJ_TRIGGER };
+		int count, count1, type_cnt=sizeof(types)/sizeof(ObjectType), i, i1, i2;
+		QPixmap group_icon=QPixmap(QString(":/icones/icones/") +
+														QString(BaseObject::getSchemaName(OBJ_VIEW)) +
+														QString("_grp") + QString(".png"));
+
+		try
+		{
+			//Get all views that belongs to the specified schema
+			obj_list=db_model->getObjects(OBJ_VIEW, schema);
+
+			//Create a table group item
+			item=new QTreeWidgetItem(root);
+			item->setIcon(0,group_icon);
+			item->setText(0,BaseObject::getTypeName(OBJ_VIEW) +
+										QString(" (%1)").arg(obj_list.size()));
+			item->setData(1, Qt::UserRole, QVariant::fromValue<unsigned>(OBJ_VIEW));
+
+			font=item->font(0);
+			font.setItalic(true);
+			item->setFont(0, font);
+
+			count=obj_list.size();
+			for(i=0; i < count; i++)
+			{
+				view=dynamic_cast<View *>(obj_list[i]);
+
+				item1=new QTreeWidgetItem(item);
+				item1->setText(0,Utf8String::create(view->getName()));
+				item1->setToolTip(0,Utf8String::create(view->getName()));
+
+				item1->setIcon(0,QPixmap(QString(":/icones/icones/") +
+																 QString(BaseObject::getSchemaName(OBJ_VIEW)) +
+																 QString(".png")));
+				item1->setData(0, Qt::UserRole, generateItemValue(view));
+
+				if(view->isProtected())
+				{
+					font=item1->font(0);
+					font.setItalic(true);
+					item1->setFont(0,font);
+					item1->setForeground(0,BaseObjectView::getFontStyle(ParsersAttributes::PROT_COLUMN).foreground());
+				}
+
+				//Creating the group for the child objects (rules, triggers)
+				for(i1=0; i1 < type_cnt; i1++)
+				{
+					if(visible_objs_map[types[i1]])
+					{
+						item2=new QTreeWidgetItem(item1);
+						item2->setIcon(0,QPixmap(QString(":/icones/icones/") +
+																		 QString(BaseObject::getSchemaName(types[i1])) +
+																		 QString("_grp") +
+																		 QString(".png")));
+						font=item2->font(0);
+						font.setItalic(true);
+						item2->setFont(0, font);
+
+						count1=view->getObjectCount(types[i1]);
+						item2->setText(0,BaseObject::getTypeName(types[i1]) +
+													 QString(" (%1)").arg(count1));
+
+						for(i2=0; i2 < count1; i2++)
+						{
+							object=view->getObject(i2,types[i1]);
+
+							item3=new QTreeWidgetItem(item2);
+							item3->setText(0,Utf8String::create(object->getName()));
+							item3->setToolTip(0,Utf8String::create(object->getName()));
+							item3->setData(0, Qt::UserRole, generateItemValue(object));
+
+
+							if(object->isProtected())
+							{
+								font=item3->font(0);
+								font.setItalic(true);
+								item3->setFont(0,font);
+								item3->setForeground(0,BaseObjectView::getFontStyle(ParsersAttributes::PROT_COLUMN).foreground());
+							}
+
+							item3->setIcon(0,QPixmap(QString(":/icones/icones/") + BaseObject::getSchemaName(types[i1]) + QString(".png")));
 						}
 					}
 				}
@@ -902,7 +1108,7 @@ void ModelObjectsWidget::updateDatabaseTree(void)
 					root->setForeground(0,BaseObjectView::getFontStyle(ParsersAttributes::PROT_COLUMN).foreground());
 				}
 
-				updatedSchemaTree(root);
+				updateSchemaTree(root);
 
 				for(i=0; i < type_cnt; i++)
 				{
@@ -1027,7 +1233,7 @@ void ModelObjectsWidget::close(void)
 		selected_object=reinterpret_cast<BaseObject *>(data.value<void *>());
 	}
 
-	QDockWidget::close();
+	QWidget::close();
 }
 
 void ModelObjectsWidget::setModel(ModelWidget *model_wgt)
@@ -1041,12 +1247,7 @@ void ModelObjectsWidget::setModel(ModelWidget *model_wgt)
 void ModelObjectsWidget::setModel(DatabaseModel *db_model)
 {
 	this->db_model=db_model;
-
-	if(db_model)
-		dockWidgetContents->setEnabled(true);
-	else
-		dockWidgetContents->setEnabled(false);
-
+	content_wgt->setEnabled(db_model!=NULL);
 	updateObjectsView();
 	visaoobjetos_stw->setEnabled(true);
 }

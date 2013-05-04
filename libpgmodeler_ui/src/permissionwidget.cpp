@@ -25,12 +25,12 @@ PermissionWidget::PermissionWidget(QWidget *parent): BaseObjectWidget(parent, OB
 	QFont font;
 	QCheckBox *check=NULL;
 	unsigned i;
-	QString privs[12]={ ParsersAttributes::SELECT_PRIV, ParsersAttributes::INSERT_PRIV,
-											 ParsersAttributes::UPDATE_PRIV, ParsersAttributes::DELETE_PRIV,
-											 ParsersAttributes::TRUNCATE_PRIV, ParsersAttributes::REFERENCES_PRIV,
-											 ParsersAttributes::TRIGGER_PRIV, ParsersAttributes::CREATE_PRIV,
-											 ParsersAttributes::CONNECT_PRIV, ParsersAttributes::TEMPORARY_PRIV,
-											 ParsersAttributes::EXECUTE_PRIV, ParsersAttributes::USAGE_PRIV };
+	QString privs[]={ ParsersAttributes::SELECT_PRIV, ParsersAttributes::INSERT_PRIV,
+										ParsersAttributes::UPDATE_PRIV, ParsersAttributes::DELETE_PRIV,
+										ParsersAttributes::TRUNCATE_PRIV, ParsersAttributes::REFERENCES_PRIV,
+										ParsersAttributes::TRIGGER_PRIV, ParsersAttributes::CREATE_PRIV,
+										ParsersAttributes::CONNECT_PRIV, ParsersAttributes::TEMPORARY_PRIV,
+										ParsersAttributes::EXECUTE_PRIV, ParsersAttributes::USAGE_PRIV };
 
 	Ui_PermissionWidget::setupUi(this);
 
@@ -56,8 +56,8 @@ PermissionWidget::PermissionWidget(QWidget *parent): BaseObjectWidget(parent, OB
 	configureFormLayout(permission_grid, OBJ_PERMISSION);
 
 	roles_tab=new ObjectTableWidget(ObjectTableWidget::ADD_BUTTON |
-																		 ObjectTableWidget::REMOVE_BUTTON |
-																		 ObjectTableWidget::EDIT_BUTTON, false, this);
+																	ObjectTableWidget::REMOVE_BUTTON |
+																	ObjectTableWidget::EDIT_BUTTON, false, this);
 	roles_tab->setColumnCount(1);
 	roles_tab->setHeaderLabel(trUtf8("Role"),0);
 	roles_tab->setHeaderIcon(QPixmap(":/icones/icones/role.png"),0);
@@ -68,8 +68,8 @@ PermissionWidget::PermissionWidget(QWidget *parent): BaseObjectWidget(parent, OB
 	roles_gb->setLayout(grid);
 
 	permissions_tab=new ObjectTableWidget(ObjectTableWidget::REMOVE_BUTTON |
-																				 ObjectTableWidget::EDIT_BUTTON |
-																				 ObjectTableWidget::REMOVE_ALL_BUTTON, true, this);
+																				ObjectTableWidget::EDIT_BUTTON |
+																				ObjectTableWidget::REMOVE_ALL_BUTTON, true, this);
 	permissions_tab->setColumnCount(3);
 	permissions_tab->setHeaderLabel(trUtf8("Id"),0);
 	permissions_tab->setHeaderIcon(QPixmap(":/icones/icones/uid.png"),0);
@@ -148,7 +148,6 @@ void PermissionWidget::setAttributes(DatabaseModel *model, BaseObject *parent_ob
 	{
 		unsigned priv;
 		QCheckBox *chk=NULL, *chk1=NULL;
-		ObjectType obj_type;
 
 		connect(objectselection_wgt, SIGNAL(s_visibilityChanged(BaseObject*,bool)), this, SLOT(showSelectedRoleData(void)));
 		connect(roles_tab, SIGNAL(s_rowAdded(int)), this, SLOT(selectRole(void)));
@@ -156,7 +155,6 @@ void PermissionWidget::setAttributes(DatabaseModel *model, BaseObject *parent_ob
 
 		name_edt->setText(Utf8String::create(object->getName(true)));
 		comment_edt->setText(Utf8String::create(object->getTypeName()));
-		obj_type=object->getObjectType();
 
 		for(priv=Permission::PRIV_SELECT; priv<=Permission::PRIV_USAGE; priv++)
 		{
@@ -168,40 +166,8 @@ void PermissionWidget::setAttributes(DatabaseModel *model, BaseObject *parent_ob
 			chk1->setChecked(false);
 
 			//Enabling the checkboxes using a validation of privilege type against the curret object type.
-			if(((priv==Permission::PRIV_SELECT || priv==Permission::PRIV_UPDATE) &&
-					(obj_type==OBJ_TABLE || obj_type==OBJ_COLUMN || obj_type==OBJ_SEQUENCE)) ||
-
-				 ((priv==Permission::PRIV_INSERT || priv==Permission::PRIV_DELETE) &&
-					(obj_type==OBJ_TABLE)) ||
-
-				 ((priv==Permission::PRIV_INSERT) && (obj_type==OBJ_COLUMN)) ||
-
-				 ((priv==Permission::PRIV_TRUNCATE || priv==Permission::PRIV_TRIGGER) &&
-					(obj_type==OBJ_TABLE)) ||
-
-				 (priv==Permission::PRIV_REFERENCES &&
-					(obj_type==OBJ_TABLE || obj_type==OBJ_COLUMN)) ||
-
-				 (priv==Permission::PRIV_CREATE &&
-					(obj_type==OBJ_DATABASE || obj_type==OBJ_SCHEMA || obj_type==OBJ_TABLESPACE)) ||
-
-				 ((priv==Permission::PRIV_CONNECT || priv==Permission::PRIV_TEMPORARY) &&
-					(obj_type==OBJ_DATABASE)) ||
-
-				 (priv==Permission::PRIV_EXECUTE &&
-					(obj_type==OBJ_FUNCTION || obj_type==OBJ_AGGREGATE)) ||
-
-				 (priv==Permission::PRIV_USAGE &&
-					(obj_type==OBJ_SEQUENCE || obj_type==OBJ_LANGUAGE || obj_type==OBJ_SCHEMA)) ||
-
-				 (priv==Permission::PRIV_SELECT && obj_type==OBJ_VIEW))
-			{
-				privileges_tbw->setRowHidden(priv, false);
-			}
-			else
-				privileges_tbw->setRowHidden(priv, true);
+			privileges_tbw->setRowHidden(priv, !Permission::objectAcceptsPermission(object->getObjectType(), priv));
 		}
-
 
 		listPermissions();
 		permissions_tab->clearSelection();
@@ -398,6 +364,7 @@ void PermissionWidget::editPermission(void)
 		roles_tab->blockSignals(true);
 		roles_tab->removeRows();
 
+		perm_disable_sql_chk->setChecked(permission->isSQLDisabled());
 		perm_id_edt->setText(permission->getName());
 		revoke_rb->setChecked(permission->isRevoke());
 		cascade_chk->setChecked(permission->isCascade());
@@ -447,6 +414,7 @@ void PermissionWidget::configurePermission(Permission *perm)
 		unsigned count, i, priv;
 		QCheckBox *chk=NULL, *chk1=NULL;
 
+		perm->setSQLDisabled(perm_disable_sql_chk->isChecked());
 		perm->setCascade(cascade_chk->isChecked());
 		perm->setRevoke(revoke_rb->isChecked());
 
@@ -488,6 +456,7 @@ void PermissionWidget::cancelOperation(void)
 	enableEditButtons();
 	cancel_tb->setEnabled(false);
 	permissions_tab->clearSelection();
+	perm_disable_sql_chk->setChecked(false);
 }
 
 void PermissionWidget::checkPrivilege(void)

@@ -61,6 +61,8 @@ RuleWidget::RuleWidget(QWidget *parent): BaseObjectWidget(parent, OBJ_RULE)
 		connect(commands_tab, SIGNAL(s_rowAdded(int)), this, SLOT(handleCommand(int)));
 		connect(commands_tab, SIGNAL(s_rowUpdated(int)), this, SLOT(handleCommand(int)));
 		connect(commands_tab, SIGNAL(s_rowEdited(int)), this, SLOT(editCommand(int)));
+
+		setRequiredField(event_lbl);
 	}
 	catch(Exception &e)
 	{
@@ -93,7 +95,7 @@ void RuleWidget::handleCommand(int row)
 		commands_tab->removeRow(row);
 }
 
-void RuleWidget::setAttributes(DatabaseModel *model, Table *parent_tab, OperationList *op_list, Rule *rule)
+void RuleWidget::setAttributes(DatabaseModel *model, BaseTable *parent_tab, OperationList *op_list, Rule *rule)
 {
 	unsigned qtd, i;
 

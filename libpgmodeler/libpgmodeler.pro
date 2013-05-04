@@ -2,10 +2,9 @@ include(../pgmodeler.pro)
 
 TEMPLATE = lib
 TARGET = pgmodeler
-DESTDIR = ../build/lib
 
-LIBS += $$DESTDIR/$$LIBUTIL \
-        $$DESTDIR/$$LIBPARSERS
+LIBS += $$DESTDIR/$$LIBUTILS \
+	$$DESTDIR/$$LIBPARSERS
 
 HEADERS += $$PWD/src/textbox.h \
            $$PWD/src/cast.h \
@@ -41,7 +40,16 @@ HEADERS += $$PWD/src/textbox.h \
            $$PWD/src/operationlist.h \
            $$PWD/src/tableobject.h \
            $$PWD/src/reference.h \
-           $$PWD/src/permission.h
+           $$PWD/src/permission.h \
+	   $$PWD/src/collation.h \
+	   $$PWD/src/pgmodeler.h \
+	   $$PWD/src/excludeelement.h \
+	   $$PWD/src/element.h \
+	   $$PWD/src/parameter.h \
+	   $$PWD/src/operation.h \
+	   $$PWD/src/copyoptions.h \
+	   $$PWD/src/typeattribute.h \
+    src/extension.h
 
 
 SOURCES +=  $$PWD/src/textbox.cpp \
@@ -78,4 +86,12 @@ SOURCES +=  $$PWD/src/textbox.cpp \
             $$PWD/src/operationlist.cpp \
             $$PWD/src/tableobject.cpp \
             $$PWD/src/reference.cpp \
-            $$PWD/src/permission.cpp
+            $$PWD/src/permission.cpp \
+	    $$PWD/src/collation.cpp \
+	    $$PWD/src/pgmodeler.cpp \
+	    $$PWD/src/excludeelement.cpp \
+	    $$PWD/src/element.cpp \
+	    $$PWD/src/parameter.cpp \
+	    $$PWD/src/copyoptions.cpp \
+	    $$PWD/src/typeattribute.cpp \
+    src/extension.cpp

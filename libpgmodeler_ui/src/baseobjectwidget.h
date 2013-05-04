@@ -32,6 +32,7 @@
 #include "modelobjectswidget.h"
 #include "objectselectorwidget.h"
 #include "ui_baseobjectwidget.h"
+#include "pgsqltypewidget.h"
 
 /* Declaring the PgSQLType class as a Qt metatype in order to permit
 	 that instances of the class be used as data of QVariant and QMetaType */
@@ -60,8 +61,8 @@ class BaseObjectWidget: public QDialog, public Ui::BaseObjectWidget {
 		//! \brief Reference database model
 		DatabaseModel *model;
 
-		//! \brief Reference table (used only when editing table objects)
-		Table *table;
+		//! \brief Reference table/view (used only when editing table objects)
+		BaseTable *table;
 
 		//! \brief Stores the object previous name (used to validate schema renaming)
 		QString prev_name;
@@ -88,27 +89,11 @@ class BaseObjectWidget: public QDialog, public Ui::BaseObjectWidget {
 		//! \brief Indicates if the object is a new one or is being edited
 		bool new_object;
 
-		//! \brief Object selectors for schema, owner an tablespace
+		//! \brief Object selectors for schema, owner, tablespace and collation
 		ObjectSelectorWidget *schema_sel,
 		*owner_sel,
-		*tablespace_sel;
-
-		//! \brief Constants used to generate version intervals for version alert frame
-		static const unsigned UNTIL_VERSION=0,
-		VERSIONS_INTERVAL=1,
-		AFTER_VERSION=2;
-
-		//! \brief Generates a string containing the specified version interval
-		static QString generateVersionsInterval(unsigned ver_interv_id, const QString &ini_ver, const QString &end_ver="");
-
-		/*! \brief Generates a alert frame highlighting the fields of exclusive use on the specified
-			PostgreSQL versions. On the first map (fields) the key is the PostgreSQL versions and
-			the values are the reference to the widget. The second map is used to specify the values
-			of widgets specific for each version. */
-		QFrame *generateVersionWarningFrame(map<QString, vector<QWidget *> > &fields, map<QWidget *, vector<QString> > *values=NULL);
-
-		//! \brief Generates a informative frame containing the specified message
-		QFrame *generateInformationFrame(const QString &msg);
+		*tablespace_sel,
+		*collation_sel;
 
 		/*! \brief Merges the specified grid layout with the 'baseobject_grid' creating a single form.
 			The obj_type parameter must be specified to show the object type icon */
@@ -142,9 +127,29 @@ class BaseObjectWidget: public QDialog, public Ui::BaseObjectWidget {
 		this original one whit the op_list=NULL and obj_px=NAN, obj_py=NAN */
 		virtual void setAttributes(DatabaseModel *model, BaseObject *object, BaseObject *parent_obj);
 
+		void setRequiredField(QWidget *widget);
+
 	public:
+		//! \brief Constants used to generate version intervals for version alert frame
+		static const unsigned UNTIL_VERSION=0,
+		VERSIONS_INTERVAL=1,
+		AFTER_VERSION=2;
+
 		BaseObjectWidget(QWidget * parent = 0, ObjectType obj_type=BASE_OBJECT);
+
 		virtual ~BaseObjectWidget(void);
+
+		//! \brief Generates a string containing the specified version interval
+		static QString generateVersionsInterval(unsigned ver_interv_id, const QString &ini_ver, const QString &end_ver="");
+
+		/*! \brief Generates a alert frame highlighting the fields of exclusive use on the specified
+			PostgreSQL versions. On the first map (fields) the key is the PostgreSQL versions and
+			the values are the reference to the widget. The second map is used to specify the values
+			of widgets specific for each version. */
+		static QFrame *generateVersionWarningFrame(map<QString, vector<QWidget *> > &fields, map<QWidget *, vector<QString> > *values=NULL);
+
+		//! \brief Generates a informative frame containing the specified message
+		static QFrame *generateInformationFrame(const QString &msg);
 
 	protected slots:
 		void editPermissions(void);

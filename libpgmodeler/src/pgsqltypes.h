@@ -35,7 +35,7 @@ using namespace std;
 
 class BaseType{
 	private:
-		static const unsigned types_count=191;
+		static const unsigned types_count=201;
 
 	protected:
 		static QString type_list[types_count];
@@ -103,13 +103,14 @@ class ActionType: public BaseType{
 class ConstraintType: public BaseType{
 	private:
 		static const unsigned offset=6;
-		static const unsigned types_count=4;
+		static const unsigned types_count=5;
 
 	public:
 		static const unsigned primary_key=offset;
 		static const unsigned foreign_key=offset+1;
 		static const unsigned check=offset+2;
 		static const unsigned unique=offset+3;
+		static const unsigned exclude=offset+4;
 
 		ConstraintType(const QString &type_name);
 		ConstraintType(unsigned type_id);
@@ -122,7 +123,7 @@ class ConstraintType: public BaseType{
 
 class EventType: public BaseType{
 	private:
-		static const unsigned offset=10;
+		static const unsigned offset=11;
 		static const unsigned types_count=5;
 
 	public:
@@ -148,7 +149,7 @@ class EventType: public BaseType{
 
 class ExecutionType: public BaseType{
 	private:
-		static const unsigned offset=15;
+		static const unsigned offset=16;
 		static const unsigned types_count=2;
 
 	public:
@@ -166,13 +167,15 @@ class ExecutionType: public BaseType{
 
 class FunctionType: public BaseType{
 	private:
-		static const unsigned offset=17;
-		static const unsigned types_count=3;
+		static const unsigned offset=18;
+		static const unsigned types_count=5;
 
 	public:
 		static const unsigned _volatile_=offset;
 		static const unsigned stable=offset+1;
 		static const unsigned immutable=offset+2;
+		static const unsigned leakproof=offset+3;
+		static const unsigned not_leakproof=offset+4;
 
 		FunctionType(const QString &type_name);
 		FunctionType(unsigned type_id);
@@ -185,7 +188,7 @@ class FunctionType: public BaseType{
 
 class IndexingType: public BaseType{
 	private:
-		static const unsigned offset=20;
+		static const unsigned offset=23;
 		static const unsigned types_count=5;
 
 	public:
@@ -206,7 +209,7 @@ class IndexingType: public BaseType{
 
 class IntervalType: public BaseType{
 	private:
-		static const unsigned offset=93;
+		static const unsigned offset=103;
 		static const unsigned types_count=13;
 
 	public:
@@ -235,8 +238,8 @@ class IntervalType: public BaseType{
 
 class SpatialType: public BaseType{
 	private:
-		unsigned variacao;
-		static const unsigned offset=184;
+		unsigned variation;
+		static const unsigned offset=194;
 		static const unsigned types_count=7;
 
 		/*! \brief Used in conjunction with spatial_type, and denotes the SRID value
@@ -295,9 +298,11 @@ class UserTypeConfig {
 													DOMAIN_TYPE=2, //! \brief The type refers to a domain
 													TABLE_TYPE=4, //! \brief The type refers to a table
 													SEQUENCE_TYPE=8, //! \brief The type refers to a sequence
+													VIEW_TYPE=16, //! \brief The type refers to a view
+													EXTENSION_TYPE=32, //! \brief The type refers to a extension used as datatype
 
 													//! \brief This constant refers to all types above and must be used only on type searches
-													ALL_USER_TYPES=15;
+													ALL_USER_TYPES=63;
 
 		UserTypeConfig(void)
 		{ name=""; ptype=NULL; pmodel=NULL; type_conf=BASE_TYPE; }
@@ -307,16 +312,16 @@ class UserTypeConfig {
 
 class PgSQLType: public BaseType{
 	private:
-		static const unsigned offset=25;
-		static const unsigned types_count=68;
+		static const unsigned offset=28;
+		static const unsigned types_count=75;
 
 		//! \brief Offset for oid types
-		static const unsigned oid_start=69;
-		static const unsigned oid_end=80;
+		static const unsigned oid_start=79;
+		static const unsigned oid_end=90;
 
 		//! \brief Offset for pseudo types
-		static const unsigned pseudo_start=81;
-		static const unsigned pseudo_end=92;
+		static const unsigned pseudo_start=91;
+		static const unsigned pseudo_end=102;
 
 		//! \brief Configuration for user defined types
 		static vector<UserTypeConfig> user_types;
@@ -399,9 +404,9 @@ class PgSQLType: public BaseType{
 		bool isUserType(void);
 		bool isArrayType(void);
 		bool isGiSType(void);
+		bool isRangeType(void);
 		bool hasVariableLength(void);
 		bool acceptsPrecision(void);
-
 
 		QString getCodeDefinition(unsigned def_type, QString ref_type="");
 
@@ -432,12 +437,14 @@ class PgSQLType: public BaseType{
 		friend class Domain;
 		friend class Table;
 		friend class Sequence;
+		friend class View;
+		friend class Extension;
 		friend class DatabaseModel;
 };
 
 class BehaviorType: public BaseType{
 	private:
-		static const unsigned offset=106;
+		static const unsigned offset=116;
 		static const unsigned types_count=3;
 
 	public:
@@ -456,7 +463,7 @@ class BehaviorType: public BaseType{
 
 class SecurityType: public BaseType{
 	private:
-		static const unsigned offset=109;
+		static const unsigned offset=119;
 		static const unsigned types_count=2;
 
 	public:
@@ -474,7 +481,7 @@ class SecurityType: public BaseType{
 
 class LanguageType: public BaseType{
 	private:
-		static const unsigned offset=111;
+		static const unsigned offset=121;
 		static const unsigned types_count=6;
 
 	public:
@@ -496,12 +503,13 @@ class LanguageType: public BaseType{
 
 class EncodingType: public BaseType{
 	private:
-		static const unsigned offset=117;
+		static const unsigned offset=127;
 		static const unsigned types_count=41;
 
 	public:
 		EncodingType(void);
 		EncodingType(const QString &type);
+		EncodingType(const unsigned type_id);
 
 		static void getTypes(QStringList &type_list);
 		unsigned operator = (unsigned type_id);
@@ -510,11 +518,12 @@ class EncodingType: public BaseType{
 		bool operator == (const char *type_name);
 		bool operator != (const QString &type_name);
 		bool operator != (EncodingType type);
+		bool operator != (unsigned tipo_id);
 };
 
 class StorageType: public BaseType{
 	private:
-		static const unsigned offset=158;
+		static const unsigned offset=168;
 		static const unsigned types_count=4;
 
 	public:
@@ -537,7 +546,7 @@ class StorageType: public BaseType{
 
 class MatchType: public BaseType{
 	private:
-		static const unsigned offset=162;
+		static const unsigned offset=172;
 		static const unsigned types_count=3;
 
 	public:
@@ -556,7 +565,7 @@ class MatchType: public BaseType{
 
 class DeferralType: public BaseType{
 	private:
-		static const unsigned offset=165;
+		static const unsigned offset=174;
 		static const unsigned types_count=2;
 
 	public:
@@ -574,7 +583,7 @@ class DeferralType: public BaseType{
 
 class CategoryType: public BaseType{
 	private:
-		static const unsigned offset=167;
+		static const unsigned offset=177;
 		static const unsigned types_count=14;
 
 	public:
@@ -604,13 +613,13 @@ class CategoryType: public BaseType{
 
 class FiringType: public BaseType{
 	private:
-		static const unsigned offset=181;
+		static const unsigned offset=191;
 		static const unsigned types_count=3;
 
 	public:
 		static const unsigned before=offset;
-		static const unsigned after=offset;
-		static const unsigned instead_of=offset+1;
+		static const unsigned after=offset+1;
+		static const unsigned instead_of=offset+2;
 
 		FiringType(const QString &type_name);
 		FiringType(unsigned type_id);

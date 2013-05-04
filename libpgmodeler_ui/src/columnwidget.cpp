@@ -41,8 +41,8 @@ ColumnWidget::ColumnWidget(QWidget *parent): BaseObjectWidget(parent, OBJ_COLUMN
 		configureFormLayout(column_grid, OBJ_COLUMN);
 		connect(parent_form->apply_ok_btn,SIGNAL(clicked(bool)), this, SLOT(applyConfiguration(void)));
 
-		parent_form->setMinimumSize(530, 380);
-		parent_form->setMaximumHeight(380);
+		parent_form->setMinimumSize(530, 450);
+		parent_form->setMaximumHeight(450);
 	}
 	catch(Exception &e)
 	{
@@ -73,7 +73,7 @@ void ColumnWidget::setAttributes(DatabaseModel *model, BaseObject *parent_obj, O
 		def_value_txt->setPlainText(Utf8String::create(column->getDefaultValue()));
 	}
 
-	data_type->setAttributes(type, model, UserTypeConfig::BASE_TYPE | UserTypeConfig::DOMAIN_TYPE,true,false);
+	data_type->setAttributes(type, model, UserTypeConfig::BASE_TYPE | UserTypeConfig::DOMAIN_TYPE | UserTypeConfig::EXTENSION_TYPE,true,false);
 }
 
 void ColumnWidget::applyConfiguration(void)

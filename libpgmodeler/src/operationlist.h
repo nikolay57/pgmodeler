@@ -29,60 +29,8 @@ undo / redo all the operations made.
 #define OPERATIONLIST_H
 
 #include "databasemodel.h"
-#include <QObject>
-
-class Operation {
-	protected:
-		/*! \brief Reference to the parent object of the original object that has suffered the operation,
-		This attribute is used only in the case of table objects such as columns, indexes,
-		constraints, rules. For other object types there is no need to use this attribute
-		because the parent object for other objects is always the database model */
-		BaseObject *parent_obj;
-
-		//! \brief Reference (on the pool) to the copy of the original object
-		BaseObject *pool_obj;
-
-		//! \brief Reference to the original object that generates the operation.
-		BaseObject *original_obj;
-
-		/*! \brief Stores the XML definition of the special objects this means the objects
-		 that reference columns added by relationship. This is the case of triggers,
-		 indexes, sequences, constraints. */
-		QString xml_definition;
-
-		//! \brief Operation type (Constants OBJECT_[MODIFIED | CREATED | REMOVED | MOVED]
-		unsigned op_type;
-
-		//! \brief Operation chain type. This attribute is used to redo/undo several operations at once
-		unsigned chain_type;
-
-		//! \brief Object index inside the list on its parent object
-		int object_idx;
-
-	public:
-		//! \brief Constants used to reference the type of operations
-		static const unsigned OBJECT_MODIFIED=0,
-													OBJECT_CREATED=1,
-													OBJECT_REMOVED=2,
-													/*! \brief This type of operation has the same effect of operation OBJECT_MODIFIED
-													 except that it not (re)validate relationships as happens with operations.
-													 This type of operation (OBJECT_MOVED) is useful to undo position changes of
-													 graphical objects without executing unnecessary revalidations of relationships */
-													OBJECT_MOVED=3;
-
-		//! \brief Operation chain types
-		static const unsigned NO_CHAIN=10, //! \brief The operation is not part of a chain
-													CHAIN_START=11, //! \brief The operation is the head of the chain
-													CHAIN_MIDDLE=12, //! \brief The operation is in the middle of the chain
-													CHAIN_END=13; //! \brief The operation is the last on the chain
-
-
-		Operation(void)
-		{ parent_obj=NULL; pool_obj=NULL; original_obj=NULL;
-			object_idx=-1; chain_type=NO_CHAIN; }
-
-		friend class OperationList;
-};
+#include "pgmodeler.h"
+#include "operation.h"
 
 class OperationList: public QObject {
 	private:
@@ -186,7 +134,7 @@ class OperationList: public QObject {
 		//! \brief Sets the maximum size for the list
 		static void setMaximumSize(unsigned max);
 
-		/*! \brief Registers in the list of operations that the object passed suffered some kind
+		/*! \brief Registers in the list of operations that the passed object suffered some kind
 		 of modification (modified, removed, inserted, moved) in addition the method stores
 		 its original content.
 		 This method should ALWAYS be called before the object in question
@@ -233,17 +181,5 @@ class OperationList: public QObject {
 		//! \brief Signal emitted when one operation is executed
 		void s_operationExecuted(int progress, QString object_id, unsigned icon_id);
 };
-
-
-/*! \brief Template function that makes a copy from 'copy_obj' to 'psrc_obj' doing the cast to the
-	 correct object type. If the source object (psrc_obj) is not allocated the function allocates the attributes
-	 before copying. Both objects must be the same type if both are allocated.
-	 -- Brainfuck syntax style! :p -- */
-template <class Classe>
-void copyObject(BaseObject **psrc_obj, Classe *copy_obj);
-
-/*! \brief This functions is a second way to make a copy between two objects. It simply calls
-	 the template function above. */
-void copyObject(BaseObject **psrc_obj, BaseObject *copy_obj, ObjectType obj_type);
 
 #endif

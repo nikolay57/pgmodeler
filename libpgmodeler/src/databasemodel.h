@@ -48,6 +48,8 @@ Additionally, this class, saves, loads and generates the XML/SQL definition of a
 #include "xmlparser.h"
 #include "permission.h"
 #include "domain.h"
+#include "collation.h"
+#include "extension.h"
 #include <algorithm>
 #include <locale.h>
 
@@ -91,6 +93,8 @@ class DatabaseModel:  public QObject, public BaseObject {
 		vector<BaseObject *> domains;
 		vector<BaseObject *> sequences;
 		vector<BaseObject *> permissions;
+		vector<BaseObject *> collations;
+		vector<BaseObject *> extensions;
 
 		/*! \brief Stores the xml definition for special objects. This map is used
 		 when revalidating the relationships */
@@ -119,6 +123,9 @@ class DatabaseModel:  public QObject, public BaseObject {
 		 returned object can be: table, sequence, domain or type */
 		BaseObject *getObjectPgSQLType(PgSQLType type);
 
+		//! \brief Creates a IndexElement or ExcludeElement from XML depending on type of the 'elem' param.
+		void createElement(Element &elem, TableObject *tab_obj, BaseObject *parent_obj);
+
 	public:
 		DatabaseModel(void);
 		~DatabaseModel(void);
@@ -135,9 +142,6 @@ class DatabaseModel:  public QObject, public BaseObject {
 
 		//! \brief Validates all the relationship, propagating all column modifications over the tables
 		void validateRelationships(void);
-
-		//! \brief Validates the code definition for the passed object
-		static QString validateObjectDefinition(BaseObject *object, unsigned def_type);
 
 		//! \brief Returns the list of objects that belongs to the passed schema
 		vector<BaseObject *> getObjects(ObjectType obj_type, BaseObject *schema=NULL);
@@ -296,9 +300,20 @@ class DatabaseModel:  public QObject, public BaseObject {
 		void removeSequence(Sequence *sequence, int obj_idx=-1);
 		Sequence *getSequence(unsigned obj_idx);
 
+		void addCollation(Collation *collation, int obj_idx=-1);
+		void removeCollation(Collation *collation, int obj_idx=-1);
+		Collation *getCollation(unsigned obj_idx);
+
+		void addExtension(Extension *extension, int obj_idx=-1);
+		void removeExtension(Extension *extension, int obj_idx=-1);
+		Extension *getExtension(unsigned obj_idx);
+
 		void addPermission(Permission *perm);
 		void removePermission(Permission *perm);
 		int getPermissionIndex(Permission *perm);
+
+		//! \brief Inserts a list of permissions into the model
+		void addPermissions(vector<Permission *> &perms);
 
 		//! \brief Removes all the permission related to the passed object
 		void removePermissions(BaseObject *object);
@@ -320,6 +335,7 @@ class DatabaseModel:  public QObject, public BaseObject {
 		Language *createLanguage(void);
 		Function *createFunction(void);
 		Parameter createParameter(void);
+		TypeAttribute createTypeAttribute(void);
 		Type *createType(void);
 		Domain *createDomain(void);
 		Cast *createCast(void);
@@ -333,12 +349,14 @@ class DatabaseModel:  public QObject, public BaseObject {
 		Rule *createRule(void);
 		Sequence *createSequence(bool ignore_onwer=false);
 		View *createView(void);
+		Collation *createCollation(void);
+		Extension *createExtension(void);
 		Permission *createPermission(void);
 		Textbox *createTextbox(void);
 		BaseRelationship *createRelationship(void);
 		Constraint *createConstraint(BaseObject *parent_obj);
 		Index *createIndex(Table *table);
-		Trigger *createTrigger(Table *table);
+		Trigger *createTrigger(BaseTable *table);
 
 		//! \brief Creates/removes the relationship between the passed view and the referecend tables
 		void updateViewRelationships(View *view);
@@ -375,6 +393,10 @@ class DatabaseModel:  public QObject, public BaseObject {
 		 the previous schema name must be informed in order to rename the types correctly */
 		void validateSchemaRenaming(Schema *schema, const QString &prev_sch_name);
 
+		/*! \brief Creates the system objects: public schema and languages C, SQL and plpgsql. This method ignores one of these
+		objects if some of them already exists */
+		void createSystemObjects(bool create_public);
+
 	signals:
 		//! \brief Signal emitted when a new object is added to the model
 		void s_objectAdded(BaseObject *objeto);
@@ -383,7 +405,7 @@ class DatabaseModel:  public QObject, public BaseObject {
 		void s_objectRemoved(BaseObject *objeto);
 
 		//! \brief Signal emitted when an object is created from a xml code
-		void s_objectLoaded(int progresso, QString object_id, unsigned id_icone);
+		void s_objectLoaded(int progress, QString object_id, unsigned icon_id);
 };
 
 #endif

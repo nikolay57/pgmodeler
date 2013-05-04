@@ -36,6 +36,7 @@
 #include "modelobjectswidget.h"
 #include "pgmodelerplugin.h"
 #include "modeloverviewwidget.h"
+#include "modelvalidationwidget.h"
 
 using namespace std;
 
@@ -54,6 +55,9 @@ class MainWindow: public QMainWindow, public Ui::MainWindow {
 
 		//! \brief Model overview widget
 		ModelOverviewWidget *overview_wgt;
+
+		//! \brief Model validation widget
+		ModelValidationWidget *model_valid_wgt;
 
 		//! \brief Temporary model restoration form
 		ModelRestorationForm *restoration_form;
@@ -131,13 +135,10 @@ class MainWindow: public QMainWindow, public Ui::MainWindow {
 		void exportModel(void);
 
 		//! \brief Updates the opened models with new configurations
-		void updateModelsConfigurations(void);
+		void applyConfigurations(void);
 
 		//! \brief Applies the zoom to the currently focused model
 		void applyZoom(void);
-
-		//! \brief Toggle the fullscreen mode
-		void showFullScreen(bool fullscreen);
 
 		//! \brief Execute the plugin represented by the action that calls the slot
 		void executePlugin(void);
@@ -154,6 +155,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow {
 
 		//! \brief Opens the pgModeler Wiki in a web browser window
 		void openWiki(void);
+		void hideRightWidgetsBar(void);
 };
 
 #endif

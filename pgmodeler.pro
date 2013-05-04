@@ -73,70 +73,66 @@ macx | windows {
 # Main variables settings #
 ###########################
 CONFIG += ordered qt stl rtti exceptions warn_on
+
+#Avoiding the generation of app bundle on MacOSX
+macx:CONFIG -= app_bundle
+
+#Additional configs on unix / windows
 unix:CONFIG += x11
 windows:CONFIG += windows
-unix:LIB_PREFIX = lib
 
+#Libraries extension and preffix for each platform
+unix:LIB_PREFIX = lib
 unix:LIB_EXT = so
 windows:LIB_EXT = dll
 macx:LIB_EXT = dylib
 
-SUBDIRS = libutil \
+SUBDIRS = libutils \
           libparsers \
           libdbconnect \
           libpgmodeler \
           libobjrenderer \
           libpgmodeler_ui \
           crashhandler \
-          main \
-          plugins/dummyplugin
+	  main \
+	  main-cli \
+	  plugins/dummy \
+	  plugins/xml2object
 
 
-LIBUTIL=$${LIB_PREFIX}util.$${LIB_EXT}
+#Creating the project's libraries names based upon the running OS
+LIBUTILS=$${LIB_PREFIX}utils.$${LIB_EXT}
 LIBPARSERS=$${LIB_PREFIX}parsers.$${LIB_EXT}
 LIBDBCONNECT=$${LIB_PREFIX}dbconnect.$${LIB_EXT}
 LIBPGMODELER=$${LIB_PREFIX}pgmodeler.$${LIB_EXT}
 LIBOBJRENDERER=$${LIB_PREFIX}objrenderer.$${LIB_EXT}
 LIBPGMODELERUI=$${LIB_PREFIX}pgmodeler_ui.$${LIB_EXT}
 
-QT += core gui #qt3support
+QT += core gui
 TEMPLATE = subdirs
 MOC_DIR = moc
 OBJECTS_DIR = obj
 UI_DIR = src
+DESTDIR = $$PWD/build
 
 INCLUDEPATH += $$XML_INC \
                $$PGSQL_INC \
-               $$PWD/libutil/src \
+	       $$PWD/libutils/src \
                $$PWD/libdbconnect/src \
                $$PWD/libparsers/src \
                $$PWD/libpgmodeler/src \
                $$PWD/libobjrenderer/src \
                $$PWD/libpgmodeler_ui/src
 
+#Adding xml and PostgreSQL libs
 LIBS = $$XML_LIB $$PGSQL_LIB
 
-pgmodeler.path = $$PWD/build/
-pgmodeler.files = samples schemas lang conf README.md COMPILING.md PLUGINS.md CHANGELOG.md LICENSE libpgmodeler_ui/res/imagens/pgmodeler_logo.png
+#Deployment configurations
+pgmodeler.path = $$DESTDIR
+pgmodeler.files = samples schemas lang conf README.md CHANGELOG.md LICENSE libpgmodeler_ui/res/imagens/pgmodeler_logo.png
 
 unix {
- pgmodeler.files += start-pgmodeler.sh
-}
-
-macx {
- pgmodeler.files += start-pgmodeler-mac.sh
-}
-
-windows {
- pgmodeler.files += start-pgmodeler.bat
+ pgmodeler.files += pgmodeler.sh
 }
 
 INSTALLS += pgmodeler
-
-OTHER_FILES += \
-    schemas/xml/permission.sch \
-    schemas/sql/common/permission.sch \
-    schemas/sql/9.1/permission.sch \
-    schemas/sql/9.0/permission.sch \
-    schemas/sql/8.4/permission.sch \
-    schemas/xml/dtd/permission.dtd

@@ -34,6 +34,7 @@
 #include "trigger.h"
 #include "function.h"
 #include "role.h"
+#include "copyoptions.h"
 
 class Table: public BaseTable {
 	private:
@@ -47,8 +48,11 @@ class Table: public BaseTable {
 		//! \brief Stores the tables that 'this' object inherits attributes
 		vector<Table *> ancestor_tables;
 
-		//! \brief Stores the tables that 'this' object clones the attributes
-		vector<Table *> copy_tables;
+		//! \brief Specifies the table from which columns are copied
+		Table *copy_table;
+
+		//! \brief Specifies the copy table options
+		CopyOptions copy_op;
 
 		//! \brief Indicates if the table accepts OIDs
 		bool with_oid;
@@ -78,12 +82,6 @@ class Table: public BaseTable {
 		//! \brief Removes an acestor table using its index
 		void removeAncestorTable(unsigned idx);
 
-		//! \brief Removes an copy table using its name
-		void removeCopyTable(const QString &name);
-
-		//! \brief Removes an copy table using its index
-		void removeCopyTable(unsigned idx);
-
 	public:
 		Table(void);
 		~Table(void);
@@ -95,7 +93,7 @@ class Table: public BaseTable {
 		void setWithOIDs(bool value);
 
 		//! \brief Adds an object to the table. It can be inserted at a specified index 'obj_idx'.
-		void addObject(BaseObject *obj, int obj_idx=-1, bool copy_tab=false);
+		void addObject(BaseObject *obj, int obj_idx=-1);
 
 		//! \brief Gets a object from table through its index and type
 		BaseObject *getObject(unsigned obj_idx, ObjectType obj_type);
@@ -126,6 +124,18 @@ class Table: public BaseTable {
 
 		//! \brief Adds a rule to table (optionally the user can add the object at the specified index 'idx')
 		void addRule(Rule *reg, int idx_reg=-1);
+
+		//! \brief Configures the copy table
+		void setCopyTable(Table *tab);
+
+		//! \brief Configures the copy table options
+		void setCopyTableOptions(CopyOptions copy_op);
+
+		//! \brief Returns the copy table
+		Table *getCopyTable(void);
+
+		//! \brief Get the copy table options
+		CopyOptions getCopyTableOptions(void);
 
 		/*! \brief Gets a column through its name. The boolean parameter is used
 		 to search columns referencing their old names */
@@ -164,12 +174,6 @@ class Table: public BaseTable {
 		//! \brief Gets a ancestor table through its index
 		Table *getAncestorTable(unsigned idx);
 
-		//! \brief Gets a copy table through its name
-		Table *getCopyTable(const QString &name);
-
-		//! \brief Gets a copy table through its index
-		Table *getCopyTable(unsigned idx);
-
 		//! \brief Gets the column count
 		unsigned getColumnCount(void);
 
@@ -186,10 +190,7 @@ class Table: public BaseTable {
 		unsigned getRuleCount(void);
 
 		//! \brief Gets the ancestor table count
-		unsigned getAncestorTable(void);
-
-		//! \brief Gets the copy tables count
-		unsigned getCopyTable(void);
+		unsigned getAncestorTableCount(void);
 
 		/*! \brief Gets the the count for the specified object type. The boolean parameter indicates
 		 that objects added by relationship must be counted */
@@ -232,7 +233,7 @@ class Table: public BaseTable {
 		int getObjectIndex(const QString &name, ObjectType obj_type);
 
 		//! \brief Returns the index for the specified table object
-		int getObjectIndex(TableObject *obj);
+		int getObjectIndex(BaseObject *obj);
 
 		//! \brief Returns the primary key of the table. Returns NULL when it doesn't exists
 		Constraint *getPrimaryKey(void);

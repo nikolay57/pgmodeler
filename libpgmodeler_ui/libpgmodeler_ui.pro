@@ -2,16 +2,14 @@ include(../pgmodeler.pro)
 
 TEMPLATE = lib
 TARGET = pgmodeler_ui
-DESTDIR = ../build/lib
+RESOURCES += res/resources.qrc
+windows:RCC_DIR += src
 
-LIBS = $$DESTDIR/$$LIBUTIL \
+LIBS = $$DESTDIR/$$LIBUTILS \
        $$DESTDIR/$$LIBPARSERS \
        $$DESTDIR/$$LIBDBCONNECT \
        $$DESTDIR/$$LIBOBJRENDERER \
        $$DESTDIR/$$LIBPGMODELER
-
-RESOURCES += res/resources.qrc
-windows:RCC_DIR += src
 
 SOURCES += $$PWD/src/mainwindow.cpp \
 	   $$PWD/src/modelwidget.cpp \
@@ -62,9 +60,16 @@ SOURCES += $$PWD/src/mainwindow.cpp \
 	   $$PWD/src/modelexportform.cpp \
 	   $$PWD/src/modeloverviewwidget.cpp \
 	   $$PWD/src/modelrestorationform.cpp \
-           $$PWD/src/quickrenamewidget.cpp \
+	   $$PWD/src/objectrenamewidget.cpp \
            $$PWD/src/pgmodelerplugin.cpp \
-           $$PWD/src/pluginsconfigwidget.cpp
+           $$PWD/src/pluginsconfigwidget.cpp \
+	   $$PWD/src/collationwidget.cpp \
+	   $$PWD/src/elementswidget.cpp \
+	   $$PWD/src/modelexporthelper.cpp \
+	   $$PWD/src/modelvalidationwidget.cpp \
+	   $$PWD/src/modelvalidationhelper.cpp \
+	   $$PWD/src/validationinfo.cpp \
+	   $$PWD/src/extensionwidget.cpp
 
 
 HEADERS += $$PWD/src/mainwindow.h \
@@ -117,8 +122,15 @@ HEADERS += $$PWD/src/mainwindow.h \
            $$PWD/src/pgmodelerplugin.h \
 	   $$PWD/src/modeloverviewwidget.h \
 	   $$PWD/src/modelrestorationform.h \
-           $$PWD/src/quickrenamewidget.h \
-           $$PWD/src/pluginsconfigwidget.h
+	   $$PWD/src/objectrenamewidget.h \
+           $$PWD/src/pluginsconfigwidget.h \
+	   $$PWD/src/collationwidget.h \
+	   $$PWD/src/elementswidget.h \
+	   $$PWD/src/modelexporthelper.h \
+	   $$PWD/src/modelvalidationwidget.h \
+	   $$PWD/src/modelvalidationhelper.h \
+	   $$PWD/src/validationinfo.h \
+	   $$PWD/src/extensionwidget.h
 
 FORMS += $$PWD/ui/mainwindow.ui \
 	 $$PWD/ui/aboutform.ui \
@@ -165,6 +177,10 @@ FORMS += $$PWD/ui/mainwindow.ui \
          $$PWD/ui/connectionsconfigwidget.ui \
 	 $$PWD/ui/modeloverviewwidget.ui \
 	 $$PWD/ui/modelrestorationform.ui \
-         $$PWD/ui/quickrenamewidget.ui \
+	 $$PWD/ui/objectrenamewidget.ui \
          $$PWD/ui/pluginsconfigwidget.ui \
-         $$PWD/ui/schemawidget.ui
+         $$PWD/ui/schemawidget.ui \
+	 $$PWD/ui/collationwidget.ui \
+	 $$PWD/ui/elementswidget.ui \
+	 $$PWD/ui/modelvalidationwidget.ui \
+	 $$PWD/ui/extensionwidget.ui

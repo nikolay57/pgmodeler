@@ -138,6 +138,16 @@ RelationshipWidget::RelationshipWidget(QWidget *parent): BaseObjectWidget(parent
 		connect(constraints_tab, SIGNAL(s_rowEdited(int)), this, SLOT(editObject(int)));
 		connect(constraints_tab, SIGNAL(s_rowRemoved(int)), this, SLOT(removeObject(int)));
 
+		connect(defaults_rb, SIGNAL(toggled(bool)), this, SLOT(selectCopyOptions(void)));
+		connect(including_rb, SIGNAL(toggled(bool)), this, SLOT(selectCopyOptions(void)));
+		connect(excluding_rb, SIGNAL(toggled(bool)), this, SLOT(selectCopyOptions(void)));
+
+		connect(defaults_chk, SIGNAL(toggled(bool)), this, SLOT(selectCopyOptions(void)));
+		connect(constraints_chk, SIGNAL(toggled(bool)), this, SLOT(selectCopyOptions(void)));
+		connect(comments_chk, SIGNAL(toggled(bool)), this, SLOT(selectCopyOptions(void)));
+		connect(indexes_chk, SIGNAL(toggled(bool)), this, SLOT(selectCopyOptions(void)));
+		connect(storage_chk, SIGNAL(toggled(bool)), this, SLOT(selectCopyOptions(void)));
+		connect(all_chk, SIGNAL(toggled(bool)), this, SLOT(selectCopyOptions(void)));
 	}
 	catch(Exception &e)
 	{
@@ -237,6 +247,7 @@ void RelationshipWidget::setAttributes(DatabaseModel *model, OperationList *op_l
 		recv_table_txt->setPlainText(Utf8String::create(base_rel->getTable(BaseRelationship::DST_TABLE)->getName(true)));
 	}
 
+	disable_sql_chk->setVisible(base_rel->getObjectType()==OBJ_RELATIONSHIP);
 	table1_mand_chk->setText(Utf8String::create(base_rel->getTable(BaseRelationship::SRC_TABLE)->getName()) + trUtf8(" is required"));
 	table2_mand_chk->setText(Utf8String::create(base_rel->getTable(BaseRelationship::DST_TABLE)->getName()) + trUtf8(" is required"));
 
@@ -258,8 +269,8 @@ void RelationshipWidget::setAttributes(DatabaseModel *model, OperationList *op_l
 		}
 		else
 		{
-			src_suffix_lbl->setText(Utf8String::create(aux_rel->getTable(BaseRelationship::SRC_TABLE)->getName()) + trUtf8(" Suffix:"));
-			dst_suffix_lbl->setText(Utf8String::create(aux_rel->getTable(BaseRelationship::DST_TABLE)->getName()) + trUtf8(" Suffix:"));
+			src_suffix_lbl->setText(Utf8String::create(trUtf8("Table 1 ") + trUtf8(" Suffix:")));
+			dst_suffix_lbl->setText(Utf8String::create(trUtf8("Table 2 ") + trUtf8(" Suffix:")));
 		}
 
 		auto_suffix_chk->setChecked(aux_rel->isAutomaticSuffix());
@@ -318,6 +329,20 @@ void RelationshipWidget::setAttributes(DatabaseModel *model, OperationList *op_l
 
 			if(this->new_object)
 				aux_rel->disconnectRelationship();
+
+			if(rel_type==BaseRelationship::RELATIONSHIP_DEP)
+			{
+				CopyOptions copy_op=aux_rel->getCopyOptions();
+
+				including_rb->setChecked(copy_op.isIncluding());
+				excluding_rb->setChecked(copy_op.isExcluding());
+				all_chk->setChecked(copy_op.isOptionSet(CopyOptions::ALL));
+				defaults_chk->setChecked(!all_chk->isChecked() && copy_op.isOptionSet(CopyOptions::DEFAULTS));
+				constraints_chk->setChecked(!all_chk->isChecked() && copy_op.isOptionSet(CopyOptions::CONSTRAINTS));
+				storage_chk->setChecked(!all_chk->isChecked() && copy_op.isOptionSet(CopyOptions::STORAGE));
+				comments_chk->setChecked(!all_chk->isChecked() && copy_op.isOptionSet(CopyOptions::COMMENTS));
+				indexes_chk->setChecked(!all_chk->isChecked() && copy_op.isOptionSet(CopyOptions::INDEXES));
+			}
 		}
 	}
 
@@ -366,6 +391,8 @@ void RelationshipWidget::setAttributes(DatabaseModel *model, OperationList *op_l
 			base_rel->getRelationshipType()==BaseRelationship::RELATIONSHIP_FK))
 		rel_attribs_tbw->addTab(tabs[3], tab_lables[3]);
 
+	copy_options_grp->setVisible(base_rel->getObjectType()==OBJ_RELATIONSHIP &&
+															 base_rel->getRelationshipType()==BaseRelationship::RELATIONSHIP_DEP);
 
 	listAdvancedObjects();
 }
@@ -568,27 +595,34 @@ void RelationshipWidget::addObject(void)
 
 void RelationshipWidget::editObject(int row)
 {
+	ObjectType obj_type=OBJ_COLUMN;
+
 	try
 	{
 		op_list->ignoreOperationChain(true);
 
+
 		if(sender()==attributes_tab)
 		{
+			obj_type=OBJ_COLUMN;
 			column_wgt->setAttributes(this->model, this->object, this->op_list,
 																reinterpret_cast<Column *>(attributes_tab->getRowData(row).value<void *>()));
 			column_wgt->show();
 		}
 		else
 		{
+			obj_type=OBJ_CONSTRAINT;
 			constraint_wgt->setAttributes(this->model, this->object, this->op_list,
 																	 reinterpret_cast<Constraint *>(constraints_tab->getRowData(row).value<void *>()));
 			constraint_wgt->show();
 		}
 
+		listObjects(obj_type);
 		op_list->ignoreOperationChain(false);
 	}
 	catch(Exception &e)
 	{
+		listObjects(obj_type);
 		op_list->ignoreOperationChain(false);
 		throw Exception(e.getErrorMessage(),e.getErrorType(),__PRETTY_FUNCTION__,__FILE__,__LINE__, &e);
 	}
@@ -641,8 +675,8 @@ void RelationshipWidget::removeObjects(void)
 		for(i=0; i < count; i++)
 		{
 			object=rel->getObject(0, obj_type);
-			rel->removeObject(object);
 			op_list->registerObject(object, Operation::OBJECT_REMOVED, 0, rel);
+			rel->removeObject(object);
 		}
 	}
 	catch(Exception &e)
@@ -682,8 +716,8 @@ void RelationshipWidget::removeObject(int row)
 			obj_type=OBJ_CONSTRAINT;
 
 		object=rel->getObject(row, obj_type);
-		rel->removeObject(object);
 		op_list->registerObject(object, Operation::OBJECT_REMOVED, 0, rel);
+		rel->removeObject(object);
 	}
 	catch(Exception &e)
 	{
@@ -692,12 +726,35 @@ void RelationshipWidget::removeObject(int row)
 	}
 }
 
+void RelationshipWidget::selectCopyOptions(void)
+{
+	all_chk->setEnabled(!defaults_rb->isChecked());
+
+	defaults_chk->setEnabled(!all_chk->isChecked() && !defaults_rb->isChecked());
+	constraints_chk->setEnabled(!all_chk->isChecked() && !defaults_rb->isChecked());
+	storage_chk->setEnabled(!all_chk->isChecked() && !defaults_rb->isChecked());
+	comments_chk->setEnabled(!all_chk->isChecked() && !defaults_rb->isChecked());
+	indexes_chk->setEnabled(!all_chk->isChecked() && !defaults_rb->isChecked());
+
+	if(all_chk->isChecked() || defaults_rb->isChecked())
+	{
+		if(defaults_rb->isChecked())
+			all_chk->setChecked(false);
+
+		defaults_chk->setChecked(false);
+		constraints_chk->setChecked(false);
+		storage_chk->setChecked(false);
+		comments_chk->setChecked(false);
+		indexes_chk->setChecked(false);
+	}
+}
+
 void RelationshipWidget::applyConfiguration(void)
 {
 	try
 	{
 		Relationship *rel=NULL;
-		unsigned rel_type, count, i;
+		unsigned rel_type, count, i, copy_mode=0, copy_ops=0;
 		vector<unsigned> col_ids;
 
 		/* Due to the complexity of the Relationship class and the strong link between all
@@ -720,6 +777,22 @@ void RelationshipWidget::applyConfiguration(void)
 			rel_type=rel->getRelationshipType();
 			rel->blockSignals(true);
 
+			if(!defaults_rb->isChecked())
+			{
+				if(including_rb->isChecked())
+					copy_mode=CopyOptions::INCLUDING;
+				else
+					copy_mode=CopyOptions::EXCLUDING;
+
+				copy_ops+=(all_chk->isChecked() ? CopyOptions::ALL : 0);
+				copy_ops+=(defaults_chk->isChecked() ? CopyOptions::DEFAULTS : 0);
+				copy_ops+=(constraints_chk->isChecked() ? CopyOptions::CONSTRAINTS : 0);
+				copy_ops+=(comments_chk->isChecked() ? CopyOptions::COMMENTS : 0);
+				copy_ops+=(indexes_chk->isChecked() ? CopyOptions::INDEXES : 0);
+				copy_ops+=(storage_chk->isChecked() ? CopyOptions::STORAGE : 0);
+			}
+
+			rel->setCopyOptions(CopyOptions(copy_mode, copy_ops));
 			rel->setAutomaticSuffix(auto_suffix_chk->isChecked());
 
 			if(auto_suffix_chk->isChecked())

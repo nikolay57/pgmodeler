@@ -5,6 +5,7 @@
  [<trigger name=] "@{name}" 
  [ firing-type=] "@{firing-type}"
  [ per-line=] %if @{per-line} %then "true" %else "false" %end
+ [ constraint=] %if @{constraint} %then "true" %else "false" %end
 
  $br $tb
  %if @{decl-in-table} %then $tb %end
@@ -36,6 +37,10 @@
  %else
    $br $tb [ table=] "@{table}"
  %end
+
+  %if @{sql-disabled} %then
+   [ sql-disabled=] "true"
+  %end
 
  > $br
  %if @{comment} %then $tb @{comment} %end

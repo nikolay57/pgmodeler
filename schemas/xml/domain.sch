@@ -16,10 +16,16 @@
   %if @{protected} %then 
    [ protected=] "true"
   %end
+
+  %if @{sql-disabled} %then
+   [ sql-disabled=] "true"
+  %end
+
   > $br
 
   @{schema}
   %if @{owner} %then @{owner} %end
+  %if @{collation} %then @{collation} %end
   %if @{comment} %then @{comment} %end
 
   $tb @{type}

@@ -21,6 +21,8 @@
 const QString TableObjectView::TYPE_SEPARATOR(" ");
 const QString TableObjectView::CONSTR_SEPARATOR(" ");
 const QString TableObjectView::TXT_UNIQUE("uq");
+const QString TableObjectView::TXT_EXCLUDE("ex");
+const QString TableObjectView::TXT_CHECK("ck");
 const QString TableObjectView::TXT_PRIMARY_KEY("pk");
 const QString TableObjectView::TXT_FOREIGN_KEY("fk");
 const QString TableObjectView::TXT_NOT_NULL("nn");
@@ -226,11 +228,19 @@ void TableObjectView::configureObject(void)
 			if(str_constr.indexOf(TXT_UNIQUE)>=0)
 				atribs_tip+=(~ConstraintType(ConstraintType::unique)).toLower() + ", ";
 
+			if(str_constr.indexOf(TXT_EXCLUDE)>=0)
+				atribs_tip+=(~ConstraintType(ConstraintType::exclude)).toLower() + ", ";
+
 			if(str_constr.indexOf(TXT_NOT_NULL)>=0)
 				atribs_tip+="not null";
 		}
 		else
-			fmt=font_config[tab_obj->getSchemaName()];
+		{
+			if(!tab_obj->isProtected())
+				fmt=font_config[tab_obj->getSchemaName()];
+			else
+				fmt=font_config[ParsersAttributes::PROT_COLUMN];
+		}
 
 		configureDescriptor(constr_type);
 
@@ -286,7 +296,7 @@ void TableObjectView::configureObject(void)
 
 				atribs_tip+=(~trigger->getFiringType()).toLower() + ", ";
 
-				for(unsigned i=EventType::on_insert; i < EventType::on_truncate; i++)
+				for(unsigned i=EventType::on_insert; i <= EventType::on_truncate; i++)
 				{
 					if(trigger->isExecuteOnEvent(EventType(i)))
 					{
@@ -468,16 +478,18 @@ QString TableObjectView::getConstraintString(Column *column)
 			itr++;
 
 			//Check if the column is referecend by the constraint
-			if(constr->getColumn(column->getName(), Constraint::SOURCE_COLS))
+			if(constr->isColumnReferenced(column))
 			{
 				constr_type=constr->getConstraintType();
 
 				if(constr_type==ConstraintType::primary_key)
-					str_constr=TXT_PRIMARY_KEY + CONSTR_SEPARATOR;
-				else if(constr_type==ConstraintType::foreign_key)
+					str_constr=TXT_PRIMARY_KEY + CONSTR_SEPARATOR + str_constr;
+				if(constr_type==ConstraintType::foreign_key && str_constr.indexOf(TXT_FOREIGN_KEY) < 0)
 					str_constr+=TXT_FOREIGN_KEY + CONSTR_SEPARATOR;
-				else if(constr_type==ConstraintType::unique)
+				if(constr_type==ConstraintType::unique && str_constr.indexOf(TXT_UNIQUE) < 0)
 					str_constr+=TXT_UNIQUE + CONSTR_SEPARATOR;
+				if(constr_type==ConstraintType::exclude && str_constr.indexOf(TXT_EXCLUDE) < 0)
+					str_constr+=TXT_EXCLUDE + CONSTR_SEPARATOR;
 			}
 		}
 

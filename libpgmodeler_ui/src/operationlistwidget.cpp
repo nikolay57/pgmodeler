@@ -21,7 +21,7 @@
 
 extern TaskProgressWidget *task_prog_wgt;
 
-OperationListWidget::OperationListWidget(QWidget *parent, Qt::WindowFlags f) : QDockWidget(parent, f)
+OperationListWidget::OperationListWidget(QWidget *parent) : QWidget(parent)
 {
 	setupUi(this);
 	setModel(NULL);
@@ -30,8 +30,14 @@ OperationListWidget::OperationListWidget(QWidget *parent, Qt::WindowFlags f) : Q
 	connect(undo_tb,SIGNAL(clicked()),this,SLOT(undoOperation(void)));
 	connect(redo_tb,SIGNAL(clicked()),this,SLOT(redoOperation(void)));
 	connect(rem_operations_tb,SIGNAL(clicked()),this,SLOT(removeOperations(void)));
-	connect(operations_tw,SIGNAL(itemClicked(QTreeWidgetItem *, int)),
-					this,SLOT(selectItem(QTreeWidgetItem *, int)));
+	connect(operations_tw,SIGNAL(itemClicked(QTreeWidgetItem *, int)),this,SLOT(selectItem(QTreeWidgetItem *, int)));
+	connect(hide_tb, SIGNAL(clicked(bool)), this, SLOT(hide(void)));
+}
+
+void OperationListWidget::hide(void)
+{
+	QWidget::hide();
+	emit s_visibilityChanged(false);
 }
 
 void OperationListWidget::selectItem(QTreeWidgetItem *item, int)
@@ -50,10 +56,11 @@ void OperationListWidget::selectItem(QTreeWidgetItem *item, int)
 
 void OperationListWidget::updateOperationList(void)
 {
+	content_wgt->setEnabled(this->model_wgt!=NULL);
+
 	if(!model_wgt)
 	{
 		operations_tw->clear();
-		dockWidgetContents->setEnabled(false);
 		op_count_lbl->setText("-");
 		current_pos_lbl->setText("-");
 	}
@@ -66,7 +73,6 @@ void OperationListWidget::updateOperationList(void)
 		QFont font=this->font();
 		bool value=false;
 
-		dockWidgetContents->setEnabled(true);
 		op_count_lbl->setText(QString("%1").arg(model_wgt->op_list->getCurrentSize()));
 		current_pos_lbl->setText(QString("%1").arg(model_wgt->op_list->getCurrentIndex()));
 		redo_tb->setEnabled(model_wgt->op_list->isRedoAvailable());

@@ -30,7 +30,7 @@
 #include "modelwidget.h"
 #include "messagebox.h"
 
-class ModelObjectsWidget: public QDockWidget, public Ui::ModelObjectsWidget {
+class ModelObjectsWidget: public QWidget, public Ui::ModelObjectsWidget {
 	private:
 		Q_OBJECT
 
@@ -60,10 +60,13 @@ class ModelObjectsWidget: public QDockWidget, public Ui::ModelObjectsWidget {
 		map<ObjectType, bool> visible_objs_map;
 
 		//! \brief Updates only a schema tree starting from the 'root' item
-		void updatedSchemaTree(QTreeWidgetItem *root);
+		void updateSchemaTree(QTreeWidgetItem *root);
 
 		//! \brief Updates only a table tree starting from the 'root' item
 		void updateTableTree(QTreeWidgetItem *root, BaseObject *schema);
+
+		//! \brief Updates only a view tree starting from the 'root' item
+		void updateViewTree(QTreeWidgetItem *root, BaseObject *schema);
 
 		//! \brief Updates the whole database object tree
 		void updateDatabaseTree(void);
@@ -82,7 +85,7 @@ class ModelObjectsWidget: public QDockWidget, public Ui::ModelObjectsWidget {
 		void showEvent(QShowEvent *);
 
 	public:
-		ModelObjectsWidget(bool simplified_view=false, QWidget * parent = 0, Qt::WindowFlags f = 0);
+		ModelObjectsWidget(bool simplified_view=false, QWidget * parent = 0);
 
 		BaseObject *getSelectedObject(void);
 
@@ -103,6 +106,7 @@ class ModelObjectsWidget: public QDockWidget, public Ui::ModelObjectsWidget {
 		void updateObjectsView(void);
 		void setObjectVisible(ObjectType obj_type, bool visible);
 		void close(void);
+		void hide(void);
 
 	private slots:
 		void setObjectVisible(QListWidgetItem *item);
@@ -110,9 +114,11 @@ class ModelObjectsWidget: public QDockWidget, public Ui::ModelObjectsWidget {
 		void selectObject(void);
 		void showObjectMenu(void);
 		void editObject(void);
+		void collapseAll(void);
 
 	signals:
 		void s_visibilityChanged(BaseObject *,bool);
+		void s_visibilityChanged(bool);
 
 		friend class MainWindow;
 };

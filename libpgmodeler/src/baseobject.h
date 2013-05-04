@@ -33,6 +33,7 @@
 #include <map>
 #include <QRegExp>
 #include <QStringList>
+#include <QTextStream>
 
 using namespace ParsersAttributes;
 
@@ -59,10 +60,13 @@ enum ObjectType {
 	OBJ_OPFAMILY,
 	OBJ_OPCLASS,
 	OBJ_DATABASE,
+	OBJ_COLLATION,
+	OBJ_EXTENSION,
 	OBJ_RELATIONSHIP,
 	OBJ_TEXTBOX,
 	OBJ_PERMISSION,
 	OBJ_PARAMETER,
+	OBJ_TYPE_ATTRIBUTE,
 	BASE_RELATIONSHIP,
 	BASE_OBJECT,
 	BASE_TABLE
@@ -76,7 +80,7 @@ class BaseObject {
 	protected:
 		/*! \brief This static attribute is used to generate the unique identifier for objects.
 		 As object instances are created this value ​​are incremented. In some classes
-		 like Schema, DBModel, Tablespace, Role, Type and Function id generators are
+		 like Schema, DatabaseModel, Tablespace, Role, Type and Function id generators are
 		 used each with a custom different numbering range (see cited classes declaration). */
 		static unsigned global_id;
 
@@ -87,8 +91,8 @@ class BaseObject {
 		 in which the objects were created */
 		unsigned object_id;
 
-		//! \brief Objects type count declared on enum ObjectType.
-		static const int OBJECT_TYPE_COUNT=27;
+		//! \brief Objects type count declared on enum ObjectType (excluding BASE_OBJECT and BASE_TABLE).
+		static const int OBJECT_TYPE_COUNT=30;
 
 		/*! \brief Indicates whether the object is protected or not.
 		 A protected object indicates that it can not suffer changes in position
@@ -96,6 +100,10 @@ class BaseObject {
 		 and deleted. This is only a flag, the cited operations are controled in a
 		 upper class layer */
 		bool is_protected,
+
+		/*! \brief This property indicates that the object is a system protected object and cannot be modified
+		by the user. Additionally, the this attribute is true the SQL/XML code for the object is not generated */
+		system_obj,
 
 		/*! \brief Indicates if the generated SQL code is disable. When this flag is true
 		the object's SQL code is created normally but is commented. This is useful when using
@@ -126,8 +134,9 @@ class BaseObject {
 		 so if one is assigned to the object an error will be raised */
 		BaseObject *tablespace;
 
-		//! \brief Maximum number of characters that an object name on PostgreSQL can have
-		static const int OBJECT_NAME_MAX_LENGTH=63;
+		/*! \brief Collation referenced by the object. Some objects cannot be associated to a collation
+		 so if one is assigned to the object an error will be raised */
+		BaseObject *collation;
 
 		//! \brief Comments related to object
 		QString comment,
@@ -154,7 +163,11 @@ class BaseObject {
 		void setDatabase(BaseObject *db);
 
 	public:
+		//! \brief Maximum number of characters that an object name on PostgreSQL can have
+		static const int OBJECT_NAME_MAX_LENGTH=63;
+
 		BaseObject(void);
+		BaseObject(bool system_obj);
 		virtual ~BaseObject(void){}
 
 		//! \brief Returns the reference to the database that owns the object
@@ -196,29 +209,40 @@ class BaseObject {
 		virtual void setName(const QString &name);
 
 		/*! \brief Defines the schema that the object belongs. An error is raised if the
-		 passed schema is not valid */
+		 passed schema is not valid or the object does not accepts the use of schemas. */
 		virtual void setSchema(BaseObject *schema);
 
 		/*! \brief Defines the owner of the object. An error is raised if the
-		 passed owner is not valid */
+		 passed owner is not valid or the object does not accepts the use of owners. */
 		virtual void setOwner(BaseObject *owner);
 
 		/*! \brief Defines the tablespace which the objects will use. An error is raised if the
-		 passed tablespace is not valid */
+		 passed tablespace is not valid or the object does not accepts the use of tablespaces. */
 		virtual void setTablespace(BaseObject *tablespace);
 
 		//! \brief Toggles the object's modify protection
 		virtual void setProtected(bool value);
 
+		/*! \brief Defines the collation which the objects will use. An error is raised if the
+		 passed collation is not valid or the object does not accepts the use of collations. */
+		virtual void setCollation(BaseObject *collation);
+
 		//! \brief Disables the SQL code commenting it on generation
 		void setSQLDisabled(bool value);
 
-		//! \brief Returns is the generated SQL is commented
+		//! \brief Returns if the generated SQL is commented
 		bool isSQLDisabled(void);
 
+		//! \brief Defines if the object is a system protected object
+		virtual void setSystemObject(bool value);
+
+		//! \brief Returns if the object is a system protected object
+		bool isSystemObject(void);
+
 		/*! \brief Returns the object's name. The parameter 'format' is used to get
-		 the name properly formated (schema qualified and using quotes) */
-		QString getName(bool format=false);
+		 the name properly formated (using quotes when there is uppercase char or extended utf-8),
+		 the parameter 'prepend_schema' includes the schema name on the objects name (defult) */
+		QString getName(bool format=false, bool prepend_schema=true);
 
 		//! \brief Retorns the object's comment
 		QString getComment(void);
@@ -243,6 +267,9 @@ class BaseObject {
 
 		//! \brief Returns the tablespace that the object is part
 		BaseObject *getTablespace(void);
+
+		//! \brief Returns the collation that the object makes use
+		BaseObject *getCollation(void);
 
 		//! \brief Returns the object's generated id
 		unsigned getObjectId(void);
@@ -271,14 +298,29 @@ class BaseObject {
 		 of the object. See schema file for: functions, schemas, domains, types. */
 		virtual QString getCodeDefinition(unsigned def_type, bool reduced_form);
 
-		//! \brief Returns if the object accepts to has a schema assigned
+		//! \brief Returns if the specified type accepts to have a schema assigned
+		static bool acceptsSchema(ObjectType obj_type);
+
+		//! \brief Returns if the specified type accepts to have an owner assigned
+		static bool acceptsOwner(ObjectType obj_type);
+
+		//! \brief Returns if the specified type accepts to have a tablespace assigned
+		static bool acceptsTablespace(ObjectType obj_type);
+
+		//! \brief Returns if the specified type accepts to have a collation assigned
+		static bool acceptsCollation(ObjectType obj_type);
+
+		//! \brief Returns if the object accepts to have a schema assigned
 		bool acceptsSchema(void);
 
-		//! \brief Returns if the object accepts to has an owner assigned
+		//! \brief Returns if the object accepts to have an owner assigned
 		bool acceptsOwner(void);
 
-		//! \brief Returns if the object accepts to has a tablespace assigned
+		//! \brief Returns if the object accepts to have a tablespace assigned
 		bool acceptsTablespace(void);
+
+		//! \brief Returns if the object accepts to have a collation assigned
+		bool acceptsCollation(void);
 
 		friend class DatabaseModel;
 };

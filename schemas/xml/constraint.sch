@@ -21,14 +21,22 @@
     [ ref-table=] "@{ref-table}"
  %end
 
+ %if @{ck-constr} %and @{no-inherit} %then
+    [ no-inherit="true"]
+ %end
+
  %if @{factor} %then
   [ factor=] "@{factor}"
  %end
 
  %if @{protected} %then 
-  [ protected=] "true"
+  [ protected="true"]
  %end
  
+  %if @{sql-disabled} %then
+   [ sql-disabled=] "true"
+  %end
+
  %if @{table} %then 
   [ table=] "@{table}"
  %end
@@ -47,7 +55,11 @@
   $tb <columns $sp names="@{dst-columns}" $sp ref-type="dst-columns"/> $br
  %end
 
- %if @{ck-constr} %then
+ %if @{ex-constr} %then
+   @{elements}
+ %end
+
+ %if @{ck-constr} %or @{ex-constr} %then
    %if @{expression} %then
     %if @{decl-in-table} %then $tb %end
     $tb <expression> <! $ob CDATA $ob @{expression} $cb $cb > </expression> $br
