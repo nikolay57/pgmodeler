@@ -3323,7 +3323,7 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/ui/modelexportform.ui" line="1137"/>
         <source>&amp;Export</source>
-        <translation>&amp;Экспортировать</translation>
+        <translation>&amp;Экспорт</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/modelexportform.ui" line="1163"/>
@@ -5186,7 +5186,7 @@ Message returned by the DBMS: %1</source>
     <message>
         <location filename="../libpgmodeler_ui/ui/tablewidget.ui" line="50"/>
         <source>With OIDs:</source>
-        <translation>С OIDами:</translation>
+        <translation>Имеет OID:</translation>
     </message>
     <message>
         <location filename="../libpgmodeler_ui/ui/tablewidget.ui" line="71"/>
