@@ -3,7 +3,7 @@
 # CAUTION: Do not modify this file unless you know what you are doing.
 #          Code generation can be broken if incorrect changes are made.
 
-[-- object: ] @{name} [ | type: ] @{sql-object} [ -- ] $br
+[-- object: ] @{name} [ | type: ] @{sql-object} [ --] $br
 
 %if @{comment} %then
  -- @{comment} -- $br
@@ -12,7 +12,7 @@
 [CREATE TABLESPACE ] @{name} $br
 
 %if @{owner} %then
-$tb [OWNER] @{owner} $br
+$tb [OWNER ] @{owner} $br
 %end
 
 $tb [LOCATION ] @{directory}; $br

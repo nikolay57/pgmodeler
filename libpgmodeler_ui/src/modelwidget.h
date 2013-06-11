@@ -25,7 +25,7 @@
 #ifndef MODEL_WIDGET_H
 #define MODEL_WIDGET_H
 
-#include <QtGui>
+#include <QtWidgets>
 #include "databasemodel.h"
 #include "operationlist.h"
 #include "messagebox.h"
@@ -38,13 +38,19 @@ class ModelWidget: public QWidget {
 		Q_OBJECT
 
 		//! \brief Message box used to show error/confirmation/alert messages
-		MessageBox msg_box;
+		Messagebox msg_box;
 
 		//! \brief Current zoom aplied to the scene
 		float current_zoom;
 
 		//! \brief Indicates if the model was modified by some operation
 		bool modified;
+
+		//! \brief Stores the objects that can be navigate through Alt+<left|right> keys
+		vector<BaseGraphicObject *> obj_nav_list;
+
+		//! \brief Stores the current selected object by the navigation
+		unsigned obj_nav_idx;
 
 		//! \brief Configures the submenu related to the object
 		void configureSubmenu(BaseObject *obj);
@@ -59,6 +65,9 @@ class ModelWidget: public QWidget {
 
 		//! \brief Copied object on the source model
 		static vector<BaseObject *> copied_objects;
+
+		//! \brief Stores the cutted object on source model (only when executing cut command)
+		static vector<BaseObject *> cutted_objects;
 
 		//! \brief Frame that indicates if the model is protected
 		QFrame *protected_model_frm;
@@ -126,10 +135,11 @@ class ModelWidget: public QWidget {
 						tmp_filename;
 
 	protected:
-		static const float	MINIMUM_ZOOM=0.35f,
-												MAXIMUM_ZOOM=4.0f,
-												ZOOM_INCREMENT=0.05f;
+		static constexpr float MINIMUM_ZOOM=0.35f,
+													 MAXIMUM_ZOOM=4.0f,
+													 ZOOM_INCREMENT=0.05f;
 
+		//! \brief Stores the relationship types menu
 		QMenu *rels_menu;
 
 		/*! \brief Configures the scene aligning the object to the grid and resizing the scene
@@ -140,7 +150,6 @@ class ModelWidget: public QWidget {
 		void mousePressEvent(QMouseEvent *event);
 		void keyPressEvent(QKeyEvent *event);
 		void focusInEvent(QFocusEvent *event);
-		void keyReleaseEvent(QKeyEvent *event);
 		void wheelEvent(QWheelEvent * event);
 
 		//! \brief Captures and handles the QWeelEvent raised on the viewport scrollbars
@@ -149,7 +158,7 @@ class ModelWidget: public QWidget {
 		//! \brief Cancel the creation of a new object (only for graphical objects)
 		void cancelObjectAddition(void);
 
-		//! \brief Desables the model actions when some new object action is active
+		//! \brief Disables the model actions when some new object action is active
 		void disableModelActions(void);
 
 	public:
@@ -166,7 +175,7 @@ class ModelWidget: public QWidget {
 		QString getTempFilename(void);
 
 		//! \brief Shows the editing form according to the passed object type
-		void showObjectForm(ObjectType obj_type, BaseObject *object=NULL, BaseObject *parent_obj=NULL, QPointF pos=QPointF(NAN, NAN));
+		void showObjectForm(ObjectType obj_type, BaseObject *object=nullptr, BaseObject *parent_obj=nullptr, QPointF pos=QPointF(NAN, NAN));
 
 		//! \brief Applies a zoom factor to the model
 		void applyZoom(float zoom);
@@ -184,10 +193,6 @@ class ModelWidget: public QWidget {
 		OperationList *getOperationList(void);
 
 	private slots:
-		/*! \brief Os slots manipular*() gerenciam os sinais enviados pela cena e modelo para execução
-		 de operações adicionais como incluir objetos modificados na lista de operações, criar
-		 objetos na cena e remover objetos da cena de forma automática */
-
 		//! \brief Handles the signals that indicates the object creation on the reference database model
 		void handleObjectAddition(BaseObject *object);
 
@@ -288,7 +293,8 @@ class ModelWidget: public QWidget {
 		friend class OperationListWidget;
 		friend class ModelObjectsWidget;
 		friend class ModelOverviewWidget;
-		friend class ExportHelper;
+		friend class ModelValidationWidget;
+		friend class ObjectFinderWidget;
 };
 
 #endif

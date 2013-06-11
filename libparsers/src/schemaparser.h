@@ -27,8 +27,6 @@
 
 #include "globalattributes.h"
 #include "exception.h"
-#include <fstream>
-#include <iostream>
 #include <map>
 #include <vector>
 #include <QDir>
@@ -131,13 +129,13 @@ class SchemaParser {
 	public:
 
 		//! \brief Constants used to refernce PostgreSQL versions.
-		static const QString  PGSQL_VERSION_90,
-													PGSQL_VERSION_91,
-													PGSQL_VERSION_92;
+		static const QString PGSQL_VERSION_90,
+												 PGSQL_VERSION_91,
+												 PGSQL_VERSION_92;
 
 		//! \brief Constants used to get a specific object definition
-		static const unsigned SQL_DEFINITION=0,
-													XML_DEFINITION=1;
+		static constexpr unsigned SQL_DEFINITION=0,
+															XML_DEFINITION=1;
 
 		/*! \brief Set the version of PostgreSQL to be adopted by the parser in obtaining
 		 the definition of the objects. This function should always be called at
@@ -164,7 +162,7 @@ class SchemaParser {
 		static void loadBuffer(const QString &buf);
 
 		//! \brief Loads a schema file and inserts its line into the parser's buffer
-		static void loadFile(const QString &file);
+		static void loadFile(const QString &filename);
 
 		/*! \brief Returns the PostgreSQL version available based on the subdirectories on schema/sql.
 		 To be recognized as a version, the directory name must follow the rule: [NUMBER].[NUMBER](.[NUMBER])*/

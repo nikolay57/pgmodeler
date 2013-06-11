@@ -20,10 +20,10 @@
 
 PermissionWidget::PermissionWidget(QWidget *parent): BaseObjectWidget(parent, OBJ_PERMISSION)
 {
-	QGridLayout *grid=NULL;
-	QFrame *frame=NULL;
+	QGridLayout *grid=nullptr;
+	QFrame *frame=nullptr;
 	QFont font;
-	QCheckBox *check=NULL;
+	QCheckBox *check=nullptr;
 	unsigned i;
 	QString privs[]={ ParsersAttributes::SELECT_PRIV, ParsersAttributes::INSERT_PRIV,
 										ParsersAttributes::UPDATE_PRIV, ParsersAttributes::DELETE_PRIV,
@@ -35,11 +35,11 @@ PermissionWidget::PermissionWidget(QWidget *parent): BaseObjectWidget(parent, OB
 	Ui_PermissionWidget::setupUi(this);
 
 	objectselection_wgt=new ModelObjectsWidget(true);
-	permission=NULL;
+	permission=nullptr;
 
 	parent_form->generalwidget_wgt->insertWidget(0, this);
 	parent_form->generalwidget_wgt->setCurrentIndex(0);
-	parent_form->setButtonConfiguration(MessageBox::OK_BUTTON);
+	parent_form->setButtonConfiguration(Messagebox::OK_BUTTON);
 	connect(parent_form->apply_ok_btn, SIGNAL(clicked(bool)), parent_form, SLOT(close(void)));
 
 	parent_form->setMinimumSize(670, 550);
@@ -137,6 +137,9 @@ void PermissionWidget::hideEvent(QHideEvent *event)
 	permissions_tab->removeRows();
 	permissions_tab->blockSignals(false);
 
+	if(perms_changed)
+		emit s_objectManipulated();
+
 	BaseObjectWidget::hideEvent(event);
 }
 
@@ -144,10 +147,14 @@ void PermissionWidget::setAttributes(DatabaseModel *model, BaseObject *parent_ob
 {
 	BaseObjectWidget::setAttributes(model,object,parent_obj);
 
+	perms_changed=false;
+	protected_obj_frm->setVisible(false);
+	parent_form->apply_ok_btn->setEnabled(true);
+
 	if(object)
 	{
 		unsigned priv;
-		QCheckBox *chk=NULL, *chk1=NULL;
+		QCheckBox *chk=nullptr, *chk1=nullptr;
 
 		connect(objectselection_wgt, SIGNAL(s_visibilityChanged(BaseObject*,bool)), this, SLOT(showSelectedRoleData(void)));
 		connect(roles_tab, SIGNAL(s_rowAdded(int)), this, SLOT(selectRole(void)));
@@ -186,12 +193,12 @@ void PermissionWidget::selectPermission(int perm_id)
 	if(perm_id >= 0)
 		permission=reinterpret_cast<Permission *>(permissions_tab->getRowData(perm_id).value<void *>());
 	else
-		permission=NULL;
+		permission=nullptr;
 }
 
 void PermissionWidget::disableGrantOptions(void)
 {
-	QCheckBox *check=NULL;
+	QCheckBox *check=nullptr;
 
 	for(unsigned i=Permission::PRIV_SELECT; i<=Permission::PRIV_USAGE; i++)
 	{
@@ -213,7 +220,7 @@ void PermissionWidget::listPermissions(void)
 	if(model)
 	{
 		vector<Permission *> permissions;
-		Permission *perm=NULL;
+		Permission *perm=nullptr;
 		unsigned i, count, i1, count1;
 		QString str_aux;
 
@@ -249,7 +256,7 @@ void PermissionWidget::listPermissions(void)
 void PermissionWidget::showSelectedRoleData(void)
 {
 	int row, row_idx=-1;
-	Role *role=NULL;
+	Role *role=nullptr;
 
 	role=dynamic_cast<Role *>(objectselection_wgt->getSelectedObject());
 	row=roles_tab->getSelectedRow();
@@ -282,7 +289,7 @@ void PermissionWidget::showSelectedRoleData(void)
 
 void PermissionWidget::addPermission(void)
 {
-	Permission *perm=NULL;
+	Permission *perm=nullptr;
 
 	try
 	{
@@ -291,6 +298,7 @@ void PermissionWidget::addPermission(void)
 		model->addPermission(perm);
 		listPermissions();
 		cancelOperation();
+		perms_changed=true;
 	}
 	catch(Exception &e)
 	{
@@ -307,7 +315,7 @@ void PermissionWidget::addPermission(void)
 
 void PermissionWidget::updatePermission(void)
 {
-	Permission *perm=NULL,*perm_bkp=NULL;
+	Permission *perm=nullptr,*perm_bkp=nullptr;
 	int perm_idx;
 
 	try
@@ -340,6 +348,7 @@ void PermissionWidget::updatePermission(void)
 		}
 
 		delete(perm_bkp);
+		perms_changed=true;
 	}
 	catch(Exception &e)
 	{
@@ -358,8 +367,8 @@ void PermissionWidget::editPermission(void)
 	if(permission)
 	{
 		unsigned priv, i, count;
-		QCheckBox *chk=NULL, *chk1=NULL;
-		Role *role=NULL;
+		QCheckBox *chk=nullptr, *chk1=nullptr;
+		Role *role=nullptr;
 
 		roles_tab->blockSignals(true);
 		roles_tab->removeRows();
@@ -397,14 +406,16 @@ void PermissionWidget::removePermission(void)
 {
 	model->removePermission(permission);
 	cancelOperation();
-	permission=NULL;
+	permission=nullptr;
 	permissions_tab->clearSelection();
+	perms_changed=true;
 }
 
 void PermissionWidget::removePermissions(void)
 {
 	model->removePermissions(object);
 	cancelOperation();
+	perms_changed=true;
 }
 
 void PermissionWidget::configurePermission(Permission *perm)
@@ -412,7 +423,7 @@ void PermissionWidget::configurePermission(Permission *perm)
 	if(perm)
 	{
 		unsigned count, i, priv;
-		QCheckBox *chk=NULL, *chk1=NULL;
+		QCheckBox *chk=nullptr, *chk1=nullptr;
 
 		perm->setSQLDisabled(perm_disable_sql_chk->isChecked());
 		perm->setCascade(cascade_chk->isChecked());
@@ -439,9 +450,9 @@ void PermissionWidget::configurePermission(Permission *perm)
 void PermissionWidget::cancelOperation(void)
 {
 	unsigned priv;
-	QCheckBox *chk=NULL;
+	QCheckBox *chk=nullptr;
 
-	permission=NULL;
+	permission=nullptr;
 
 	for(priv=Permission::PRIV_SELECT; priv<=Permission::PRIV_USAGE; priv++)
 	{
@@ -465,7 +476,7 @@ void PermissionWidget::checkPrivilege(void)
 
 	if(obj_sender && obj_sender->metaObject()->className()==QString("QCheckBox"))
 	{
-		QCheckBox *chk=NULL, *chk_priv=NULL, *chk_gop=NULL;
+		QCheckBox *chk=nullptr, *chk_priv=nullptr, *chk_gop=nullptr;
 		unsigned priv;
 
 		chk=dynamic_cast<QCheckBox *>(obj_sender);
@@ -495,7 +506,7 @@ void PermissionWidget::enableEditButtons(void)
 {
 	bool checked_privs=false;
 	unsigned priv;
-	QCheckBox *chk=NULL, *chk1=NULL;
+	QCheckBox *chk=nullptr, *chk1=nullptr;
 
 	for(priv=Permission::PRIV_SELECT; priv<=Permission::PRIV_USAGE && !checked_privs; priv++)
 	{
@@ -504,7 +515,7 @@ void PermissionWidget::enableEditButtons(void)
 		checked_privs=(chk->isChecked() || chk1->isChecked());
 	}
 
-	upd_perm_tb->setEnabled(checked_privs && permission!=NULL);
+	upd_perm_tb->setEnabled(checked_privs && permission!=nullptr);
 	add_perm_tb->setEnabled(checked_privs);
 	cancel_tb->setEnabled(add_perm_tb->isEnabled() || upd_perm_tb->isEnabled() || permissions_tab->getRowCount() > 0);
 }

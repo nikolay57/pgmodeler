@@ -40,8 +40,8 @@ class Extension: public BaseObject {
 		QString versions[2];
 
 	public:
-		static const unsigned CUR_VERSION=0,
-													OLD_VERSION=1;
+		static constexpr unsigned CUR_VERSION=0,
+															OLD_VERSION=1;
 		Extension(void);
 		~Extension(void);
 
@@ -49,9 +49,8 @@ class Extension: public BaseObject {
 		void setSchema(BaseObject *schema);
 
 		/*! \brief Defines if the extension handles a datatype. When setting to true
-		the extension will be registered as a datatype on DatabaseModel class. It's not
-		recommended to call this method if the extension already handles a type since can cause
-		reference breaking on any objects that uses this extension as data type */
+		the extension will be registered as a datatype on DatabaseModel class. This method has no effect when
+		the extension was already inserted on the model. */
 		void setHandlesType(bool value);
 
 		//! \brief Set the versions of the extension
@@ -64,7 +63,7 @@ class Extension: public BaseObject {
 		QString getVersion(unsigned ver);
 
 		//! \brief Returns the SQL / XML code definition for the extension
-		QString getCodeDefinition(unsigned def_type);
+		virtual QString getCodeDefinition(unsigned def_type) final;
 
 		void operator = (Extension &ext);
 };

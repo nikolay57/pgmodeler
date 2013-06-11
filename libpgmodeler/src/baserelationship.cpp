@@ -25,7 +25,7 @@ BaseRelationship::BaseRelationship(BaseRelationship *rel)
 		throw Exception(ERR_ASG_NOT_ALOC_OBJECT,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 	for(unsigned i=0; i < 3; i++)
-		lables[i]=NULL;
+		lables[i]=nullptr;
 
 	(*(this))=(*rel);
 }
@@ -47,14 +47,13 @@ BaseRelationship::BaseRelationship(unsigned rel_type, BaseTable *src_tab, BaseTa
 
 		for(unsigned i=0; i < 3; i++)
 		{
-			lables[i]=NULL;
+			lables[i]=nullptr;
 			lables_dist[i]=QPointF(NAN, NAN);
 		}
 
 		configureRelationship();
 
-
-		str_aux=QApplication::translate("BaseRelationship","rel_%1_%2","",QApplication::UnicodeUTF8)
+		str_aux=QApplication::translate("BaseRelationship","rel_%1_%2","")
 						.arg(src_tab->getName()).arg(dst_tab->getName());
 
 		if(str_aux.size() > BaseObject::OBJECT_NAME_MAX_LENGTH)
@@ -81,9 +80,6 @@ void BaseRelationship::configureRelationship(void)
 	attributes[ParsersAttributes::COLUMNS]="";
 	attributes[ParsersAttributes::CONSTRAINTS]="";
 	attributes[ParsersAttributes::ELEMENTS]="";
-	attributes[ParsersAttributes::SRC_SUFFIX]="";
-	attributes[ParsersAttributes::DST_SUFFIX]="";
-	attributes[ParsersAttributes::AUTO_SUFFIX]="";
 	attributes[ParsersAttributes::IDENTIFIER]="";
 	attributes[ParsersAttributes::REDUCED_FORM]="";
 	attributes[ParsersAttributes::DEFERRABLE]="";
@@ -100,6 +96,15 @@ void BaseRelationship::configureRelationship(void)
 	attributes[ParsersAttributes::ANCESTOR_TABLE]="";
 	attributes[ParsersAttributes::COPY_OPTIONS]="";
 	attributes[ParsersAttributes::COPY_MODE]="";
+	attributes[ParsersAttributes::SRC_COL_PATTERN]="";
+	attributes[ParsersAttributes::DST_COL_PATTERN]="";
+	attributes[ParsersAttributes::PK_PATTERN]="";
+	attributes[ParsersAttributes::UQ_PATTERN]="";
+	attributes[ParsersAttributes::SRC_FK_PATTERN]="";
+	attributes[ParsersAttributes::DST_FK_PATTERN]="";
+	attributes[ParsersAttributes::COL_INDEXES]="";
+	attributes[ParsersAttributes::CONSTR_INDEXES]="";
+	attributes[ParsersAttributes::ATTRIB_INDEXES]="";
 
 	//Check if the relationship type is valid
 	if(rel_type <= RELATIONSHIP_FK)
@@ -118,17 +123,17 @@ void BaseRelationship::configureRelationship(void)
 			throw Exception(ERR_INV_INH_COPY_RELATIONSHIP,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 		//Allocates the textbox for the name label
-		lables[LABEL_REL_NAME]=new Textbox;
-		lables[LABEL_REL_NAME]->setTextAttribute(Textbox::ITALIC_TXT, true);
+		lables[REL_NAME_LABEL]=new Textbox;
+		lables[REL_NAME_LABEL]->setTextAttribute(Textbox::ITALIC_TXT, true);
 
 		//Allocates the cardinality labels only when the relationship is not generalization or dependency (copy)
 		if(rel_type!=RELATIONSHIP_GEN &&
 			 rel_type!=RELATIONSHIP_DEP)
 		{
-			lables[LABEL_SRC_CARD]=new Textbox;
-			lables[LABEL_DST_CARD]=new Textbox;
-			lables[LABEL_SRC_CARD]->setTextAttribute(Textbox::ITALIC_TXT, true);
-			lables[LABEL_DST_CARD]->setTextAttribute(Textbox::ITALIC_TXT, true);
+			lables[SRC_CARD_LABEL]=new Textbox;
+			lables[DST_CARD_LABEL]=new Textbox;
+			lables[SRC_CARD_LABEL]->setTextAttribute(Textbox::ITALIC_TXT, true);
+			lables[DST_CARD_LABEL]->setTextAttribute(Textbox::ITALIC_TXT, true);
 
 			//Configures the mandatory participation for both tables
 			setMandatoryTable(SRC_TABLE,src_mandatory);
@@ -155,8 +160,8 @@ void BaseRelationship::setName(const QString &name)
 	{
 		BaseObject::setName(name);
 
-		if(lables[LABEL_REL_NAME])
-			lables[LABEL_REL_NAME]->setComment(name);
+		if(lables[REL_NAME_LABEL])
+			lables[REL_NAME_LABEL]->setComment(name);
 	}
 	catch(Exception &e)
 	{
@@ -183,7 +188,7 @@ void BaseRelationship::setMandatoryTable(unsigned table_id, bool value)
 	{
 		src_mandatory=value;
 		//Indicates that the source cardinality label will be configured
-		label_id=LABEL_SRC_CARD;
+		label_id=SRC_CARD_LABEL;
 	}
 	else
 	{
@@ -195,7 +200,7 @@ void BaseRelationship::setMandatoryTable(unsigned table_id, bool value)
 			dst_mandatory=false;
 
 		//Indicates that the destination cardinality label will be configured
-		label_id=LABEL_DST_CARD;
+		label_id=DST_CARD_LABEL;
 	}
 
 	if(!value) cmin="0";
@@ -229,7 +234,7 @@ BaseTable *BaseRelationship::getTable(unsigned table_id)
 	else if(table_id==DST_TABLE)
 		return(dst_table);
 	else
-		return(NULL);
+		return(nullptr);
 }
 
 bool BaseRelationship::isTableMandatory(unsigned table_id)
@@ -271,7 +276,7 @@ void BaseRelationship::connectRelationship(void)
 
 Textbox *BaseRelationship::getLabel(unsigned label_id)
 {
-	if(label_id<=LABEL_REL_NAME)
+	if(label_id<=REL_NAME_LABEL)
 		return(lables[label_id]);
 	else
 		//Raises an error when the label id is invalid
@@ -331,23 +336,20 @@ void BaseRelationship::setRelationshipAttributes(void)
 	{
 		attributes[ParsersAttributes::X_POS]=QString("%1").arg(points[i].x());
 		attributes[ParsersAttributes::Y_POS]=QString("%1").arg(points[i].y());
-		str_aux+=SchemaParser::getCodeDefinition(ParsersAttributes::POSITION,
-																						 attributes, SchemaParser::XML_DEFINITION);
+		str_aux+=SchemaParser::getCodeDefinition(ParsersAttributes::POSITION, attributes, SchemaParser::XML_DEFINITION);
 	}
 	attributes[ParsersAttributes::POINTS]=str_aux;
 
 	str_aux="";
 	for(i=0; i < 3; i++)
 	{
-		if(!isnan(lables_dist[i].x()))
+		if(!std::isnan(lables_dist[i].x()))
 		{
 			attributes[ParsersAttributes::X_POS]=QString("%1").arg(lables_dist[i].x());
 			attributes[ParsersAttributes::Y_POS]=QString("%1").arg(lables_dist[i].y());
-			attributes[ParsersAttributes::POSITION]=SchemaParser::getCodeDefinition(ParsersAttributes::POSITION,
-																																							attributes, SchemaParser::XML_DEFINITION);
+			attributes[ParsersAttributes::POSITION]=SchemaParser::getCodeDefinition(ParsersAttributes::POSITION, attributes, SchemaParser::XML_DEFINITION);
 			attributes[ParsersAttributes::REF_TYPE]=label_attribs[i];
-			str_aux+=SchemaParser::getCodeDefinition(ParsersAttributes::LABEL,
-																							 attributes, SchemaParser::XML_DEFINITION);
+			str_aux+=SchemaParser::getCodeDefinition(ParsersAttributes::LABEL, attributes, SchemaParser::XML_DEFINITION);
 		}
 	}
 	attributes[ParsersAttributes::LABELS_POS]=str_aux;
@@ -361,7 +363,8 @@ QString BaseRelationship::getCodeDefinition(unsigned def_type)
 	{
 		bool reduced_form;
 		setRelationshipAttributes();
-		reduced_form=attributes[ParsersAttributes::POINTS].isEmpty();
+		reduced_form=(attributes[ParsersAttributes::POINTS].isEmpty() &&
+									attributes[ParsersAttributes::LABELS_POS].isEmpty());
 		return(BaseObject::getCodeDefinition(SchemaParser::XML_DEFINITION,reduced_form));
 	}
 }
@@ -373,7 +376,7 @@ void BaseRelationship::setPoints(const vector<QPointF> &points)
 
 void BaseRelationship::setLabelDistance(unsigned label_id, QPointF label_dist)
 {
-	if(label_id > LABEL_REL_NAME)
+	if(label_id > REL_NAME_LABEL)
 		throw Exception(ERR_REF_OBJ_INV_INDEX,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 	this->lables_dist[label_id]=label_dist;
@@ -381,7 +384,7 @@ void BaseRelationship::setLabelDistance(unsigned label_id, QPointF label_dist)
 
 QPointF BaseRelationship::getLabelDistance(unsigned label_id)
 {
-	if(label_id > LABEL_REL_NAME)
+	if(label_id > REL_NAME_LABEL)
 		throw Exception(ERR_REF_OBJ_INV_INDEX,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
 	return(this->lables_dist[label_id]);

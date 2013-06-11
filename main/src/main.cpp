@@ -26,7 +26,7 @@
 
 void startCrashHandler(int signal)
 {
-	ofstream output;
+	QFile output;
 	QString lin, cmd;
 
 	/** At the moment the backtrace function does not exists on MingW (Windows) this way
@@ -34,26 +34,27 @@ void startCrashHandler(int signal)
 	#ifndef Q_OS_WIN
 		void *stack[20];
 		size_t stack_size, i;
-		char **symbols=NULL;
+		char **symbols=nullptr;
 
 		stack_size = backtrace(stack, 20);
 		symbols = backtrace_symbols(stack, stack_size);
 
 		#ifdef Q_OS_MAC
-			cmd="crashhandler.app";
+				cmd="startapp crashhandler";
 		#else
-			cmd="crashhandler";
+        cmd="crashhandler";
 		#endif
 	#else
-	cmd="crashhandler.exe";
+		cmd="crashhandler.exe";
 	#endif
 
 	//Creates the stacktrace file
-	output.open((GlobalAttributes::TEMPORARY_DIR +
-							 GlobalAttributes::DIR_SEPARATOR +
-							 GlobalAttributes::STACKTRACE_FILE).toStdString().c_str());
+	output.setFileName(GlobalAttributes::TEMPORARY_DIR +
+										 GlobalAttributes::DIR_SEPARATOR +
+										 GlobalAttributes::STACKTRACE_FILE);
+	output.open(QFile::WriteOnly);
 
-	if(output.is_open())
+	if(output.isOpen())
 	{
 		lin=QString("** pgModeler [v%1] crashed after receive signal: %2 **\n\nDate/Time:%3\n")
 				.arg(GlobalAttributes::PGMODELER_VERSION)
@@ -84,12 +85,6 @@ void startCrashHandler(int signal)
 	//Executes the crashhandler command (which must be on the same directory as the pgModeler executable)
 	cmd=QApplication::applicationDirPath() + GlobalAttributes::DIR_SEPARATOR + cmd;
 
-	//Mac OSX little fix: configure the correct path to call crashhandler.app
-	#ifdef Q_OS_MAC
-		cmd.replace("pgmodeler.app/Contents/MacOS/","");
-		cmd=QString("open ") + cmd;
-	#endif
-
     exit(1 + system(cmd.toStdString().c_str()));
 }
 
@@ -109,6 +104,7 @@ int main(int argc, char **argv)
 									 GlobalAttributes::CONFIGURATION_EXT);
 		QString style;
 		QFileInfo fi(argv[0]);
+		QApplication::setStyle(QStyleFactory::create("Fusion"));
 
 		//Changing the current working dir to the executable's directory in
 		QDir::setCurrent(fi.absolutePath());
@@ -124,27 +120,17 @@ int main(int argc, char **argv)
 		app.installTranslator(&translator);
 
 		//Loading the application splash screen
-		QPixmap pixmap(":imagens/imagens/pgmodeler_logo.png");
-		QPixmap alfa(":imagens/imagens/pgmodeler_logo_alfa.png");
-		pixmap.setAlphaChannel(alfa);
+		QSplashScreen splash;
+		QPixmap pix(QPixmap(":imagens/imagens/pgmodeler_splash.png"));
+		splash.setPixmap(pix);
+		splash.setMask(pix.mask());
 
-		//Draws the current version code on the splash
-		QFont fnt;
-		QPainter p;
-		fnt.setBold(true);
+		#ifndef Q_OS_MAC
+			splash.setWindowFlags(Qt::SplashScreen | Qt::FramelessWindowHint);
+		#else
+			splash.setWindowFlags(Qt::SplashScreen | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+		#endif
 
-		QFontMetrics fm(fnt);
-		QString str_ver=QString("v%1").arg(GlobalAttributes::PGMODELER_VERSION);
-		QRect ret=fm.boundingRect(str_ver);
-
-		p.begin(&pixmap);
-		p.setFont(fnt);
-		p.setPen(QColor(255,255,255));
-		p.drawText(QPointF((pixmap.size().width()*0.55f)-(ret.width()/2),
-											 pixmap.size().width()-17), str_ver);
-		p.end();
-
-		QSplashScreen splash(pixmap);
 		splash.show();
 		splash.repaint();
 
@@ -160,7 +146,7 @@ int main(int argc, char **argv)
 		//Raises an error if ui style is not found
 		if(!ui_style.isOpen())
 		{
-		 MessageBox msg;
+		 Messagebox msg;
 		 msg.show(Exception(Exception::getErrorMessage(ERR_FILE_DIR_NOT_ACCESSED).arg(ui_style.fileName()),
 												 ERR_FILE_DIR_NOT_ACCESSED,__PRETTY_FUNCTION__,__FILE__,__LINE__));
 		}
@@ -169,8 +155,16 @@ int main(int argc, char **argv)
 
 		app.setStyleSheet(style);
 		fmain.showMaximized();
-		app.exec();
 
+		//If the user specifies a list of files to be loaded
+		if(app.arguments().size() > 1)
+		{
+			QStringList list=app.arguments();
+			list.pop_front();
+			fmain.loadModels(list);
+		}
+
+		app.exec();
 		return(0);
 	}
 	catch(Exception &e)

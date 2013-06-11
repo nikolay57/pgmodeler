@@ -25,10 +25,11 @@
 #ifndef MODEL_OBJECTS_WIDGET_H
 #define MODEL_OBJECTS_WIDGET_H
 
-#include <QtGui>
+#include <QtWidgets>
 #include "ui_modelobjectswidget.h"
 #include "modelwidget.h"
 #include "messagebox.h"
+#include "objectfinderwidget.h"
 
 class ModelObjectsWidget: public QWidget, public Ui::ModelObjectsWidget {
 	private:
@@ -67,6 +68,9 @@ class ModelObjectsWidget: public QWidget, public Ui::ModelObjectsWidget {
 
 		//! \brief Updates only a view tree starting from the 'root' item
 		void updateViewTree(QTreeWidgetItem *root, BaseObject *schema);
+
+		//! \brief Updates only the permission tree related to the specified object
+		void updatePermissionTree(QTreeWidgetItem *root, BaseObject *object);
 
 		//! \brief Updates the whole database object tree
 		void updateDatabaseTree(void);
@@ -110,7 +114,7 @@ class ModelObjectsWidget: public QWidget, public Ui::ModelObjectsWidget {
 
 	private slots:
 		void setObjectVisible(QListWidgetItem *item);
-		void setAllObjectsVisible(bool);
+		void setAllObjectsVisible(bool value);
 		void selectObject(void);
 		void showObjectMenu(void);
 		void editObject(void);

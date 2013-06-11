@@ -31,8 +31,6 @@
 
 class Function: public BaseObject {
 	private:
-		static unsigned function_id;
-
 		//! \brief Function unique signature
 		QString signature;
 
@@ -212,8 +210,8 @@ class Function: public BaseObject {
 		void createSignature(bool format=true);
 
 		//! \brief Returns the SQL / XML code definition for the function
-		QString getCodeDefinition(unsigned def_type, bool reduced_form);
-		QString getCodeDefinition(unsigned def_type);
+		virtual QString getCodeDefinition(unsigned def_type, bool reduced_form) final;
+		virtual QString getCodeDefinition(unsigned def_type) final;
 };
 
 #endif

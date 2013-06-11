@@ -5,7 +5,7 @@
 
 %if @{pgsql91} %or @{pgsql92} %then
 
- [-- object: ] @{name} [ | type: ] @{sql-object} [ -- ] $br
+ [-- object: ] @{name} [ | type: ] @{sql-object} [ --] $br
  [CREATE COLLATION ] @{name}
 
   %if @{collation} %then

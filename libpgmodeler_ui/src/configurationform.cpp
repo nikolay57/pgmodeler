@@ -20,7 +20,7 @@
 
 ConfigurationForm::ConfigurationForm(QWidget *parent, Qt::WindowFlags f) : QDialog(parent, f)
 {
-	QGridLayout *layout=NULL;
+	QGridLayout *layout=nullptr;
 
 	setupUi(this);
 
@@ -30,22 +30,22 @@ ConfigurationForm::ConfigurationForm(QWidget *parent, Qt::WindowFlags f) : QDial
 	plugins_conf=new PluginsConfigWidget(this);
 
 	layout=new QGridLayout;
-	layout->setContentsMargins(2,2,2,2);
+	layout->setContentsMargins(4,4,4,4);
 	layout->addWidget(general_conf);
 	confs_stw->widget(GENERAL_CONF_WGT)->setLayout(layout);
 
 	layout=new QGridLayout;
-	layout->setContentsMargins(2,2,2,2);
+	layout->setContentsMargins(4,4,4,4);
 	layout->addWidget(appearance_conf);
 	confs_stw->widget(APPEARANCE_CONF_WGT)->setLayout(layout);
 
 	layout=new QGridLayout;
-	layout->setContentsMargins(2,2,2,2);
+	layout->setContentsMargins(4,4,4,4);
 	layout->addWidget(connections_conf);
 	confs_stw->widget(CONNECTIONS_CONF_WGT)->setLayout(layout);
 
 	layout=new QGridLayout;
-	layout->setContentsMargins(2,2,2,2);
+	layout->setContentsMargins(4,4,4,4);
 	layout->addWidget(plugins_conf);
 	confs_stw->widget(PLUGINS_CONF_WGT)->setLayout(layout);
 
@@ -65,10 +65,10 @@ void ConfigurationForm::close(void)
 			connections_conf->loadConfiguration();
 		}
 	}
-	catch(Exception &e)
+	catch(Exception &)
 	{}
 
-	QDialog::close();
+	QDialog::reject();
 }
 
 void ConfigurationForm::applyConfiguration(void)
@@ -77,7 +77,7 @@ void ConfigurationForm::applyConfiguration(void)
 	general_conf->applyConfiguration();
 	appearance_conf->saveConfiguration();
 	connections_conf->saveConfiguration();
-	this->close();
+	QDialog::accept();
 }
 
 void ConfigurationForm::loadConfiguration(void)
@@ -102,8 +102,8 @@ void ConfigurationForm::restoreDefaults(void)
 {
 	msg_box.show(trUtf8("Confirmation"),
 									trUtf8("Any modification made until now in the current section will be lost! Do you really want to restore default settings?"),
-									MessageBox::CONFIRM_ICON,
-									MessageBox::YES_NO_BUTTONS);
+									Messagebox::CONFIRM_ICON,
+									Messagebox::YES_NO_BUTTONS);
 
 	if(msg_box.result()==QDialog::Accepted)
 	{
@@ -130,7 +130,7 @@ void ConfigurationForm::restoreDefaults(void)
 BaseConfigWidget *ConfigurationForm::getConfigurationWidget(unsigned idx)
 {
 	if(idx >= static_cast<unsigned>(confs_stw->count()))
-		return(NULL);
+		return(nullptr);
 	else
 	{
 		switch(idx)

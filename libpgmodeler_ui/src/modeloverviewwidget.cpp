@@ -22,7 +22,7 @@
 ModelOverviewWidget::ModelOverviewWidget(QWidget *parent) : QWidget(parent, Qt::WindowCloseButtonHint)
 {
 	setupUi(this);
-	this->model=NULL;
+	this->model=nullptr;
 	zoom_factor=1;
 	this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 }
@@ -31,9 +31,9 @@ void ModelOverviewWidget::show(ModelWidget *model)
 {
 	if(this->model)
 	{
-		disconnect(this->model, NULL, this, NULL);
-		disconnect(this->model->viewport, NULL,  this, NULL);
-		disconnect(this->model->scene, NULL,  this, NULL);
+		disconnect(this->model, nullptr, this, nullptr);
+		disconnect(this->model->viewport, nullptr,  this, nullptr);
+		disconnect(this->model->scene, nullptr,  this, nullptr);
 	}
 
 	this->model=model;
@@ -116,16 +116,18 @@ void ModelOverviewWidget::resizeWindowFrame(void)
 	if(this->model)
 	{
 		QSizeF size;
+		float factor=RESIZE_FACTOR/zoom_factor;
 
 		//Resizes the window frame based upon the model's viewport dimensions
 		size=this->model->viewport->geometry().size();
-		size.setWidth(size.width() * RESIZE_FACTOR * 1/zoom_factor);
-		size.setHeight(size.height() * RESIZE_FACTOR * 1/zoom_factor);
+		size.setWidth(size.width() * factor);
+		size.setHeight(size.height() * factor);
 		window_frm->resize(size.toSize());
 
 		//Set the frame position based upon the viewport scroll bar values
-		window_frm->move(QPoint(this->model->viewport->horizontalScrollBar()->value() * RESIZE_FACTOR,
-														this->model->viewport->verticalScrollBar()->value() * RESIZE_FACTOR));
+		window_frm->move(QPoint(this->model->viewport->horizontalScrollBar()->value() * factor,
+														this->model->viewport->verticalScrollBar()->value() * factor));
+
 	}
 }
 

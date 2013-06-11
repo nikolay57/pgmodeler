@@ -1,17 +1,21 @@
 include(../pgmodeler.pro)
 
+CONFIG += console
 TEMPLATE = app
 TARGET = pgmodeler-cli
 INCLUDEPATH += ../main/src
 
-LIBS += $$DESTDIR/$$LIBUTILS \
-	$$DESTDIR/$$LIBPARSERS \
-	$$DESTDIR/$$LIBDBCONNECT \
-	$$DESTDIR/$$LIBOBJRENDERER \
-	$$DESTDIR/$$LIBPGMODELER \
-	$$DESTDIR/$$LIBPGMODELERUI
+windows:RC_FILE=../main/res/windows_ico.qrc
+windows:RCC_DIR=src/
 
-SOURCES += $$PWD/src/main.cpp \
-	   $$PWD/src/pgmodelercli.cpp
+LIBS += $$LIBDESTDIR/$$LIBUTILS \
+	$$LIBDESTDIR/$$LIBPARSERS \
+	$$LIBDESTDIR/$$LIBDBCONNECT \
+	$$LIBDESTDIR/$$LIBOBJRENDERER \
+	$$LIBDESTDIR/$$LIBPGMODELER \
+	$$LIBDESTDIR/$$LIBPGMODELERUI
 
-HEADERS += $$PWD/src/pgmodelercli.h
+SOURCES += src/main.cpp \
+	   src/pgmodelercli.cpp
+
+HEADERS += src/pgmodelercli.h

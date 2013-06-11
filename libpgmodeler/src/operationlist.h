@@ -29,7 +29,7 @@ undo / redo all the operations made.
 #define OPERATIONLIST_H
 
 #include "databasemodel.h"
-#include "pgmodeler.h"
+#include "pgmodelerns.h"
 #include "operation.h"
 
 class OperationList: public QObject {
@@ -141,7 +141,7 @@ class OperationList: public QObject {
 		 suffers any operation in the model. If this method is called after an operation on the
 		 object the order of restoration / re-execution of operations can be broken and cause
 		 segmentations fault. */
-		void registerObject(BaseObject *object, unsigned op_type, int object_idx=-1, BaseObject *parent_obj=NULL);
+		void registerObject(BaseObject *object, unsigned op_type, int object_idx=-1, BaseObject *parent_obj=nullptr);
 
 		//! \brief Gets the maximum size for the operation list
 		unsigned getMaximumSize(void);

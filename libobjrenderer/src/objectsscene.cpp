@@ -50,7 +50,7 @@ ObjectsScene::ObjectsScene(void)
 
 ObjectsScene::~ObjectsScene(void)
 {
-	QGraphicsItemGroup *item=NULL;
+	QGraphicsItemGroup *item=nullptr;
 	QList<QGraphicsItem *> items;
 	ObjectType obj_types[]={ OBJ_RELATIONSHIP, OBJ_TEXTBOX,
 													 OBJ_VIEW, OBJ_TABLE };
@@ -152,7 +152,7 @@ void ObjectsScene::setGridSize(unsigned size)
 		{
 			pen.setColor(QColor(75,115,195));
 			pen.setStyle(Qt::DashLine);
-			pen.setWidthF(1.85f);
+			pen.setWidthF(1.0f);
 			painter.setPen(pen);
 			painter.drawLine(width-1, 0,width-1,height-1);
 			painter.drawLine(0, height-1,width-1,height-1);
@@ -167,10 +167,10 @@ void ObjectsScene::showRelationshipLine(bool value, const QPointF &p_start)
 {
 	QList<QGraphicsItem *> items=this->items();
 	QGraphicsItem::GraphicsItemFlags flags;
-	BaseObjectView *object=NULL;
-	BaseGraphicObject *base_obj=NULL;
+	BaseObjectView *object=nullptr;
+	BaseGraphicObject *base_obj=nullptr;
 
-	if(!isnan(p_start.x()) && !isnan(p_start.y()))
+	if(!std::isnan(p_start.x()) && !std::isnan(p_start.y()))
 		rel_line->setLine(QLineF(p_start,p_start));
 
 	rel_line->setVisible(value);
@@ -296,13 +296,13 @@ void ObjectsScene::removeItem(QGraphicsItem *item)
 
 		if(rel)
 		{
-			disconnect(rel, NULL, this, NULL);
+			disconnect(rel, nullptr, this, nullptr);
 			rel->disconnectTables();
 		}
 		else if(tab)
-			disconnect(tab, NULL, this, NULL);
+			disconnect(tab, nullptr, this, nullptr);
 		else if(object)
-			disconnect(object, NULL, this, NULL);
+			disconnect(object, nullptr, this, nullptr);
 
 		item->setVisible(false);
 		item->setActive(false);
@@ -322,12 +322,15 @@ void ObjectsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
 		if(obj)
 			emit s_objectDoubleClicked(dynamic_cast<BaseGraphicObject *>(obj->getSourceObject()));
 	}
+	else
+		//Emit a signal indicating that no object was selected
+		emit s_objectDoubleClicked(nullptr);
 }
 
 void ObjectsScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
 	//Gets the item at mouse position
-	QGraphicsItem* item=this->itemAt(event->scenePos().x(), event->scenePos().y());
+	QGraphicsItem* item=this->itemAt(event->scenePos().x(), event->scenePos().y(), QTransform());
 
 	/* If the relationship line is visible, indicates that the user is in the middle of
 		 a relationship creation, thus is needed to inform to the scene to activate the
@@ -340,21 +343,26 @@ void ObjectsScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
 	if(event->buttons()==Qt::LeftButton)
 	{
+		sel_ini_pnt=event->scenePos();
+
 		//Selects the object (without press control) if the user is creating a relationship
 		if(item && item->isEnabled() && !item->isSelected() &&  rel_line->isVisible())
 			item->setSelected(true);
 		else if(this->selectedItems().isEmpty())
 		{
-			sel_ini_pnt=event->scenePos();
+			//sel_ini_pnt=event->scenePos();
 			selection_rect->setVisible(true);
-			emit s_objectSelected(NULL,false);
+			emit s_objectSelected(nullptr,false);
 		}
 	}
 	else if(event->buttons()==Qt::RightButton)
 	{
 		//Case there is no item at the mouse position clears the selection on the scene
 		if(!item)
+		{
 			this->clearSelection();
+			emit s_objectSelected(nullptr,false);
+		}
 
 		emit s_popupMenuRequested();
 	}
@@ -406,9 +414,11 @@ void ObjectsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 	{
 		unsigned i, count;
 		QList<QGraphicsItem *> items=this->selectedItems();
-		float x1,y1,x2,y2;
+		float x1,y1,x2,y2, dx, dy;
 		QRectF rect;
-		RelationshipView *rel=NULL;
+		RelationshipView *rel=nullptr;
+		vector<QPointF> points;
+		vector<QPointF>::iterator itr;
 
 		/* Get the extreme points of the scene to check if some objects are out the area
 		 forcing the scene to be resized */
@@ -416,6 +426,8 @@ void ObjectsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 		y1=this->sceneRect().top();
 		x2=this->sceneRect().right();
 		y2=this->sceneRect().bottom();
+		dx=event->scenePos().x() - sel_ini_pnt.x();
+		dy=event->scenePos().y() - sel_ini_pnt.y();
 
 		count=items.size();
 		for(i=0; i < count; i++)
@@ -439,6 +451,31 @@ void ObjectsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 			}
 			else
 			{
+				/* If the relationship has points added to the line is necessary to move the points
+				too. Since relationships cannot be moved naturally (by user) this will be done
+				by the scene. NOTE: this operation is done ONLY WHEN there is more than one object selected! */
+				points=rel->getSourceObject()->getPoints();
+				if(count > 1 && !points.empty())
+				{
+					itr=points.begin();
+					while(itr!=points.end())
+					{
+						//Translate the points
+						itr->setX(itr->x() + dx);
+						itr->setY(itr->y() + dy);
+
+						//Align to grid if the flag is set
+						if(align_objs_grid)
+							(*itr)=alignPointToGrid(*itr);
+
+						itr++;
+					}
+
+					//Assing the new points to relationship and reconfigure its line
+					rel->getSourceObject()->setPoints(points);
+					rel->configureLine();
+				}
+
 				rect=rel->__boundingRect();
 			}
 
@@ -464,6 +501,8 @@ void ObjectsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
 		emit s_objectsMoved(true);
 		moving_objs=false;
+		sel_ini_pnt.setX(NAN);
+		sel_ini_pnt.setY(NAN);
 	}
 	else if(selection_rect->isVisible() && event->button()==Qt::LeftButton)
 	{
@@ -483,9 +522,9 @@ void ObjectsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 void ObjectsScene::alignObjectsToGrid(void)
 {
 	QList<QGraphicsItem *> items=this->items();
-	RelationshipView *rel=NULL;
-	BaseTableView *tab=NULL;
-	TextboxView *lab=NULL;
+	RelationshipView *rel=nullptr;
+	BaseTableView *tab=nullptr;
+	TextboxView *lab=nullptr;
 	vector<QPointF> points;
 	vector<Schema *> schemas;
 	unsigned i, count, i1, count1;
@@ -515,8 +554,8 @@ void ObjectsScene::alignObjectsToGrid(void)
 				}
 
 				//Align the labels
-				for(i1=BaseRelationship::LABEL_SRC_CARD;
-						i1<=BaseRelationship::LABEL_REL_NAME; i1++)
+				for(i1=BaseRelationship::SRC_CARD_LABEL;
+						i1<=BaseRelationship::REL_NAME_LABEL; i1++)
 				{
 					lab=rel->getLabel(i1);
 					if(lab)

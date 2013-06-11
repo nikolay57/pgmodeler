@@ -21,15 +21,36 @@
 SyntaxHighlighter::SyntaxHighlighter(QTextDocument *parent, bool auto_rehighlight) : QSyntaxHighlighter(parent)
 {
 	this->auto_rehighlight=auto_rehighlight;
+	this->single_line_mode=false;
 	configureAttributes();
 }
 
-SyntaxHighlighter::SyntaxHighlighter(QTextEdit *parent, bool auto_rehighlight) : QSyntaxHighlighter(parent)
+SyntaxHighlighter::SyntaxHighlighter(QTextEdit *parent, bool auto_rehighlight, bool single_line_mode) : QSyntaxHighlighter(parent)
 {
 	parent->setAcceptRichText(true);
 	this->auto_rehighlight=auto_rehighlight;
+	this->single_line_mode=single_line_mode;
 	configureAttributes();
+
+	if(single_line_mode)
+		parent->installEventFilter(this);
 }
+
+bool SyntaxHighlighter::eventFilter(QObject *object, QEvent *event)
+{
+	//Filters the ENTER/RETURN avoiding line breaks
+	if(this->single_line_mode &&
+		 event->type() == QEvent::KeyPress &&
+		 (dynamic_cast<QKeyEvent *>(event)->key()==Qt::Key_Return ||
+			dynamic_cast<QKeyEvent *>(event)->key()==Qt::Key_Enter))
+	{
+		event->ignore();
+		return(true);
+	}
+	else
+		return(QSyntaxHighlighter::eventFilter(object, event));
+}
+
 
 void SyntaxHighlighter::configureAttributes(void)
 {
@@ -56,7 +77,7 @@ SyntaxHighlighter::MultiLineInfo *SyntaxHighlighter::getMultiLineInfo(int start_
 {
 	unsigned i, count;
 	bool found=false;
-	MultiLineInfo *info=NULL;
+	MultiLineInfo *info=nullptr;
 
 	//Checking if the passed parameters is inside a multiline info
 	count=multi_line_infos.size();
@@ -116,7 +137,7 @@ SyntaxHighlighter::MultiLineInfo *SyntaxHighlighter::getMultiLineInfo(int start_
 	if(found)
 		return(info);
 	else
-		return(NULL);
+		return(nullptr);
 }
 
 void SyntaxHighlighter::removeMultiLineInfo(int block)
@@ -162,10 +183,10 @@ QString SyntaxHighlighter::identifyWordGroup(const QString &word, const QChar &l
 	QRegExp expr;
 	vector<QString>::iterator itr, itr_end;
 	vector<QRegExp>::iterator itr_exp, itr_exp_end;
-	vector<QRegExp> *vet_expr=NULL;
+	vector<QRegExp> *vet_expr=nullptr;
 	QString group;
 	bool match=false, part_mach=false;
-	MultiLineInfo *info=NULL;
+	MultiLineInfo *info=nullptr;
 
 	//Try to get the multiline info for the current block
 	info=getMultiLineInfo(idx, idx, current_block);
@@ -296,7 +317,7 @@ QString SyntaxHighlighter::identifyWordGroup(const QString &word, const QChar &l
 
 void SyntaxHighlighter::rehighlight(void)
 {
-	MultiLineInfo *info=NULL;
+	MultiLineInfo *info=nullptr;
 
 	/* Remove all the multiline infos because during the rehighlight
 		 all them all gathered again */
@@ -584,7 +605,9 @@ void SyntaxHighlighter::loadConfiguration(const QString &filename)
 										regexp.setPattern(attribs[ParsersAttributes::VALUE]);
 
 										if(attribs[ParsersAttributes::REGULAR_EXP]==ParsersAttributes::_TRUE_)
-											regexp.setPatternSyntax(QRegExp::RegExp);
+											regexp.setPatternSyntax(QRegExp::RegExp2);
+										else if(attribs[ParsersAttributes::WILDCARD]==ParsersAttributes::_TRUE_)
+											regexp.setPatternSyntax(QRegExp::Wildcard);
 										else
 											regexp.setPatternSyntax(QRegExp::FixedString);
 

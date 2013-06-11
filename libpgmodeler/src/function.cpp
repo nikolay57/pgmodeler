@@ -18,15 +18,10 @@
 
 #include "function.h"
 
-unsigned Function::function_id=50000;
-
 Function::Function(void)
 {
-	#warning "Code temporarily disabled!"
-	//object_id=Function::function_id++;
-
 	return_type=PgSQLType("void");
-	language=NULL;
+	language=nullptr;
 	returns_setof=false;
 	is_wnd_function=false;
 	obj_type=OBJ_FUNCTION;

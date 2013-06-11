@@ -32,7 +32,16 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="obj_selector_grid">
-   <property name="margin">
+   <property name="leftMargin">
+    <number>2</number>
+   </property>
+   <property name="topMargin">
+    <number>2</number>
+   </property>
+   <property name="rightMargin">
+    <number>2</number>
+   </property>
+   <property name="bottomMargin">
     <number>2</number>
    </property>
    <property name="spacing">
@@ -68,6 +77,9 @@
      </property>
      <property name="horizontalScrollBarPolicy">
       <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
+     <property name="tabChangesFocus">
+      <bool>true</bool>
      </property>
      <property name="undoRedoEnabled">
       <bool>false</bool>
@@ -140,7 +152,7 @@
      </property>
      <property name="icon">
       <iconset resource="../res/resources.qrc">
-       <normaloff>:/icones/icones/visaogeral.png</normaloff>:/icones/icones/visaogeral.png</iconset>
+       <normaloff>:/icones/icones/objselect.png</normaloff>:/icones/icones/objselect.png</iconset>
      </property>
      <property name="iconSize">
       <size>

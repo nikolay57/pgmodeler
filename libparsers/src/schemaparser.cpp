@@ -136,35 +136,27 @@ void SchemaParser::loadBuffer(const QString &buf)
 	}
 }
 
-void SchemaParser::loadFile(const QString &file)
+void SchemaParser::loadFile(const QString &filename)
 {
-	if(file!="")
+	if(filename!="")
 	{
-		ifstream input;
-		char lin[1025];
+		QFile input;
 		QString buf;
 
 		//Open the file for reading
-		input.open(file.toStdString().c_str());
+		input.setFileName(filename);
+		input.open(QFile::ReadOnly);
 
-		if(!input.is_open())
-			throw Exception(Exception::getErrorMessage(ERR_FILE_DIR_NOT_ACCESSED).arg(file),
+		if(!input.isOpen())
+			throw Exception(Exception::getErrorMessage(ERR_FILE_DIR_NOT_ACCESSED).arg(filename),
 											ERR_FILE_DIR_NOT_ACCESSED,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
-		//While the input file doesn't reach the end
-		while(!input.eof())
-		{
-			input.getline(lin, 1024);
-			buf+=QString(lin) + CHR_LINE_END;
-		}
+		buf=input.readAll();
+		input.close();
 
 		//Loads the parser buffer
 		loadBuffer(buf);
-
-		SchemaParser::filename=file;
-
-		//Close the file stream
-		input.close();
+		SchemaParser::filename=filename;
 	}
 }
 
@@ -240,12 +232,12 @@ QString SchemaParser::getWord(void)
 
 	/* Attempt to extract a word if the first character is not
 		a special character. */
-	if(!isSpecialCharacter(current_line[column].toAscii()))
+	if(!isSpecialCharacter(current_line[column].toLatin1()))
 	{
 		/* Extract the word while it is not end of line, space or
 		 special character */
 		while(current_line[column]!=CHR_LINE_END &&
-					!isSpecialCharacter(current_line[column].toAscii()) &&
+					!isSpecialCharacter(current_line[column].toLatin1()) &&
 					current_line[column]!=CHR_SPACE &&
 					current_line[column]!=CHR_TABULATION)
 		{
@@ -409,7 +401,7 @@ bool SchemaParser::evaluateExpression(void)
 			while(current_line[column]==CHR_SPACE ||
 						current_line[column]==CHR_TABULATION) column++;
 
-			switch(current_line[column].toAscii())
+			switch(current_line[column].toLatin1())
 			{
 				//Extract the next conditional token
 				case CHR_INI_CONDITIONAL:
@@ -522,7 +514,7 @@ QString SchemaParser::getCodeDefinition(const QString & obj_name, map<QString, Q
 				getPgSQLVersions(vers);
 				while(!vers.empty())
 				{
-					//Setting the @{pgsql[VERSION]} attribute
+					//Setting the @{pgsql[VERSION]} attribute in other to know which version is being used
 					attribs[QString("pgsql" + vers.back()).remove(".")]=(vers.back()==pgsql_version ? pgsql_version : "");
 					vers.pop_back();
 				}
@@ -655,7 +647,7 @@ QString SchemaParser::getCodeDefinition(map<QString,QString> &attribs)
 
 		while(line < buffer.size())
 		{
-			chr=buffer[line][column].toAscii();
+			chr=buffer[line][column].toLatin1();
 			switch(chr)
 			{
 				/* Increments the number of rows causing the parser
@@ -865,7 +857,7 @@ QString SchemaParser::getCodeDefinition(map<QString,QString> &attribs)
 									vet_aux=&else_map[prev_if_level];
 							}
 							else
-								vet_aux=NULL;
+								vet_aux=nullptr;
 
 							/* Initializes the iterators to scan
 								 the auxiliary vector if necessary */

@@ -5,7 +5,7 @@
 
 %if %not @{pgsql90} %then
   
-  [-- object: ] @{name} [ | type: ] @{sql-object} [ -- ] $br
+  [-- object: ] @{name} [ | type: ] @{sql-object} [ --] $br
 
   [CREATE EXTENSION ] @{name} $br
   [      WITH SCHEMA ] @{schema}

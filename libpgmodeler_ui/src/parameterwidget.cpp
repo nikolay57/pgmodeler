@@ -22,8 +22,8 @@ ParameterWidget::ParameterWidget(QWidget *parent): BaseObjectWidget(parent, OBJ_
 {
 	try
 	{
-		QGridLayout *parameter_grid=NULL;
-		QSpacerItem *hspacer=NULL;
+		QGridLayout *parameter_grid=nullptr;
+		QSpacerItem *hspacer=nullptr;
 
 		Ui_ParameterWidget::setupUi(this);
 
@@ -43,8 +43,8 @@ ParameterWidget::ParameterWidget(QWidget *parent): BaseObjectWidget(parent, OBJ_
 		configureFormLayout(parameter_grid, OBJ_PARAMETER);
 		connect(parent_form->apply_ok_btn,SIGNAL(clicked(bool)), this, SLOT(applyConfiguration(void)));
 
-		parent_form->setMinimumSize(500, 270);
-		parent_form->setMaximumHeight(270);
+		parent_form->setMinimumSize(500, 300);
+		parent_form->setMaximumHeight(300);
 	}
 	catch(Exception &e)
 	{
@@ -69,7 +69,7 @@ void ParameterWidget::setAttributes(Parameter param, DatabaseModel *model)
 	default_value_edt->setText(Utf8String::create(param.getDefaultValue()));
 	data_type->setAttributes(param.getType(), model);
 
-	BaseObjectWidget::setAttributes(model,&this->parameter, NULL);
+	BaseObjectWidget::setAttributes(model,&this->parameter, nullptr);
 }
 
 void ParameterWidget::applyConfiguration(void)

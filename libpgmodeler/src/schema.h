@@ -31,10 +31,7 @@
 
 class Schema: public BaseGraphicObject {
 	private:
-		static unsigned schema_id;
-
 		QColor fill_color;
-
 		bool rect_visible;
 
 	public:
@@ -48,7 +45,7 @@ class Schema: public BaseGraphicObject {
 		void setRectVisible(bool value);
 		bool isRectVisible(void);
 
-		QString getCodeDefinition(unsigned def_type);
+		virtual QString getCodeDefinition(unsigned def_type) final;
 };
 
 #endif

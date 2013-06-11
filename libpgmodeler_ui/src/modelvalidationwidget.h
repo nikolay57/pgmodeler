@@ -19,7 +19,7 @@
 /**
 \ingroup libpgmodeler_ui
 \class ModelValidationWidget
-\brief Implements the operations to validate models.
+\brief Implements the operations to display to the user the validation operation performed by ValidationHelper
 */
 
 #ifndef MODEL_VALIDATION_WIDGET_H
@@ -30,23 +30,41 @@
 #include "modelwidget.h"
 #include "modelvalidationhelper.h"
 
+/* Declaring the ValidationInfo class as a Qt metatype in order to permit
+	 that instances of the class be used as data of QVariant and QMetaType */
+#include <QMetaType>
+Q_DECLARE_METATYPE(ValidationInfo)
+
 class ModelValidationWidget: public QWidget, public Ui::ModelValidationWidget {
 	private:
 		Q_OBJECT
+
+		//! \brief Reference model widget
 		ModelWidget *model_wgt;
+
 		ModelValidationHelper validation_helper;
+
+		//! \brief Current fix step
+		int curr_step;
 
 	public:
 		ModelValidationWidget(QWidget * parent = 0);
+
+		//! \brief Sets the database model to work on
 		void setModel(ModelWidget *model_wgt);
+
+		//! \brief Updates the connections combo
 		void updateConnections(map<QString, DBConnection *> &conns);
 
 	private slots:
-		void validateModel(void);
+		void applyFix(void);
 		void updateValidation(ValidationInfo val_info);
+		void updateProgress(int prog, QString msg);
+		void validateModel(void);
 
 	public slots:
 		void hide(void);
+		void clearOutput(void);
 
 	signals:
 		void s_visibilityChanged(bool);

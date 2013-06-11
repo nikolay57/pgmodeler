@@ -3,16 +3,19 @@ include(../pgmodeler.pro)
 TEMPLATE = app
 TARGET = crashhandler
 
-LIBS += $$DESTDIR/$$LIBUTILS \
-	$$DESTDIR/$$LIBPARSERS \
-	$$DESTDIR/$$LIBDBCONNECT \
-	$$DESTDIR/$$LIBOBJRENDERER \
-	$$DESTDIR/$$LIBPGMODELER \
-	$$DESTDIR/$$LIBPGMODELERUI
+windows:RC_FILE=../main/res/windows_ico.qrc
+windows:RCC_DIR=src/
 
-FORMS += $$PWD/ui/crashhandler.ui
+LIBS += $$LIBDESTDIR/$$LIBUTILS \
+	$$LIBDESTDIR/$$LIBPARSERS \
+	$$LIBDESTDIR/$$LIBDBCONNECT \
+	$$LIBDESTDIR/$$LIBOBJRENDERER \
+	$$LIBDESTDIR/$$LIBPGMODELER \
+	$$LIBDESTDIR/$$LIBPGMODELERUI
 
-SOURCES += $$PWD/src/main.cpp \
-           $$PWD/src/crashhandler.cpp
+FORMS += ui/crashhandler.ui
 
-HEADERS += $$PWD/src/crashhandler.h
+SOURCES += src/main.cpp \
+	   src/crashhandler.cpp
+
+HEADERS += src/crashhandler.h

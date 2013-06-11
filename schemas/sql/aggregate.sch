@@ -3,7 +3,7 @@
 # CAUTION: Do not modify this file unless you know what you are doing.
 #          Code generation can be broken if incorrect changes are made.
 
-[-- object: ] @{name} [ | type: ] @{sql-object} [ -- ] $br
+[-- object: ] @{name} [ | type: ] @{sql-object} [ --] $br
 [CREATE AGGREGATE ] @{name} [ (]@{types}[) (] $br
 $tb [SFUNC = ] @{transition}, $br
 $tb [STYPE = ] @{state-type} $br

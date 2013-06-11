@@ -25,7 +25,8 @@
 #ifndef MAIN_WINDOW_H
 #define MAIN_WINDOW_H
 
-#include <QtGui>
+#include <QtWidgets>
+#include <QPrintDialog>
 #include "ui_mainwindow.h"
 #include "modelwidget.h"
 #include "aboutform.h"
@@ -37,6 +38,7 @@
 #include "pgmodelerplugin.h"
 #include "modeloverviewwidget.h"
 #include "modelvalidationwidget.h"
+#include "objectfinderwidget.h"
 
 using namespace std;
 
@@ -51,7 +53,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow {
 		QTimer model_save_timer,	tmpmodel_save_timer;
 
 		//! \brief Message box widget used to show error/confirmation messages
-		MessageBox msg_box;
+		Messagebox msg_box;
 
 		//! \brief Model overview widget
 		ModelOverviewWidget *overview_wgt;
@@ -68,6 +70,9 @@ class MainWindow: public QMainWindow, public Ui::MainWindow {
 		//! \brief Model objects dock widget
 		ModelObjectsWidget *model_objs_wgt;
 
+		//! \brief Object finder used as dock widget
+		ObjectFinderWidget *obj_finder_wgt;
+
 		//! \brief Stores the currently focused model
 		ModelWidget *current_model;
 
@@ -80,15 +85,27 @@ class MainWindow: public QMainWindow, public Ui::MainWindow {
 		//! \brief Stores the auto save interval (in miliseconds)
 		int save_interval;
 
+		//! \brief Stores the recent models filenames
+		QStringList recent_models;
+
+		//! \brief Stores the actions related to recent models
+		QMenu recent_mdls_menu;
+
 		//! \brief QMainWindow::closeEvent() overload: Saves the configurations before close the application
-		void closeEvent(QCloseEvent *);
+		void closeEvent(QCloseEvent *event);
 
 		//! \brief QMainWindow::showEvent(): Start the countdown to model autosave
 		void showEvent(QShowEvent *);
 
+		//! \brief Maximum number of files listed on recent models menu
+		const static int MAX_RECENT_MODELS=10;
+
 	public:
 		MainWindow(QWidget *parent = 0, Qt::WindowFlags flags = 0);
 		~MainWindow(void);
+
+		//! \brief Loads a set of models from string list
+		void loadModels(const QStringList &list);
 
 	public slots:
 		/*! \brief Creates a new empty model inside the main window. If the parameter 'filename' is specified,
@@ -123,7 +140,7 @@ class MainWindow: public QMainWindow, public Ui::MainWindow {
 		void loadModel(void);
 
 		//! \brief Saves the currently focused model. If the parameter 'model' is set, saves the passed model
-		void saveModel(ModelWidget *model=NULL);
+		void saveModel(ModelWidget *model=nullptr);
 
 		//! \brief Save all loaded models
 		void saveAllModels(void);
@@ -144,8 +161,9 @@ class MainWindow: public QMainWindow, public Ui::MainWindow {
 		void executePlugin(void);
 
 		/*! \brief Saves a temporary model file related to the currently edited model. In case of failure (crash)
-		pgModeler can restore the previous model */
-		void saveTemporaryModel(void);
+		pgModeler can restore the previous model. Generally the temp file is saved only when the main window is focused
+		so the 'force' parameter is used to force the saving of temp file event pgModeler does not show its main window */
+		void saveTemporaryModel(bool force=false);
 
 		//! \brief Toggles the overview widget for the currently opened model
 		void showOverview(bool show);
@@ -153,9 +171,22 @@ class MainWindow: public QMainWindow, public Ui::MainWindow {
 		//! \brief Updates the tab name of the currently opened model if the database name is changed
 		void updateModelTabName(void);
 
+		//! \brief Loads a recent model. The filename is get from the action that triggered the slot
+		void loadRecentModel(void);
+
+		//! \brief Clears the recent models menu/list
+		void clearRecentModelsMenu(void);
+
+		//! \brief Update the recent models menu entries
+		void updateRecentModelsMenu(void);
+
+		void updateConnections(void);
+
 		//! \brief Opens the pgModeler Wiki in a web browser window
 		void openWiki(void);
-		void hideRightWidgetsBar(void);
+
+		void showRightWidgetsBar(void);
+		void showBottomWidgetsBar(void);
 };
 
 #endif

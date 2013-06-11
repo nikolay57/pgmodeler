@@ -22,9 +22,9 @@ QString XMLParser::xml_doc_filename="";
 QString XMLParser::xml_buffer="";
 QString XMLParser::dtd_decl="";
 QString XMLParser::xml_decl="";
-xmlNode *XMLParser::root_elem=NULL;
-xmlNode *XMLParser::curr_elem=NULL;
-xmlDoc *XMLParser::xml_doc=NULL;
+xmlNode *XMLParser::root_elem=nullptr;
+xmlNode *XMLParser::curr_elem=nullptr;
+xmlDoc *XMLParser::xml_doc=nullptr;
 stack<xmlNode*> XMLParser::elems_stack;
 
 const QString XMLParser::CHAR_AMP="&amp;";
@@ -62,30 +62,23 @@ void XMLParser::loadXMLFile(const QString &filename)
 {
 	try
 	{
-		ifstream input;
-		QString buffer, str_aux;
-		string line;
+		QFile input;
+		QString buffer;
 
 		if(filename!="")
 		{
 			//Opens a file stream using the file name
-			input.open(filename.toAscii(),ios_base::in);
+			input.setFileName(filename);
+			input.open(QFile::ReadOnly);
 
-			//Case the file opening was sucessful
-			if(!input.is_open())
+			//Case the file opening was not sucessful
+			if(!input.isOpen())
 			{
-				str_aux=QString(Exception::getErrorMessage(ERR_FILE_DIR_NOT_ACCESSED)).arg(filename);
-				throw Exception(str_aux,ERR_FILE_DIR_NOT_ACCESSED,__PRETTY_FUNCTION__,__FILE__,__LINE__);
+				throw Exception(QString(Exception::getErrorMessage(ERR_FILE_DIR_NOT_ACCESSED)).arg(filename),
+												ERR_FILE_DIR_NOT_ACCESSED,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 			}
 
-			buffer="";
-
-			//Read the file line by line and store them on the parser buffer
-			while(!input.eof())
-			{
-				getline(input, line);
-				buffer+=QString::fromStdString(line) + "\n";
-			}
+			buffer=input.readAll();
 			input.close();
 
 			xml_doc_filename=filename;
@@ -152,8 +145,9 @@ void XMLParser::setDTDFile(const QString &dtd_file, const QString &dtd_name)
 
 void XMLParser::readBuffer(void)
 {
-	QString buffer, msg, file;
-	xmlError *xml_error=NULL;
+	QByteArray buffer;
+	QString msg, file;
+	xmlError *xml_error=nullptr;
 	int parser_opt;
 
 	if(!xml_buffer.isEmpty())
@@ -177,8 +171,7 @@ void XMLParser::readBuffer(void)
 		buffer+=xml_buffer;
 
 		//Create an xml document from the buffer
-		xml_doc=xmlReadMemory(buffer.toStdString().c_str(), buffer.size(),
-													NULL, NULL, parser_opt);
+		xml_doc=xmlReadMemory(buffer.data(), buffer.size(),	nullptr, nullptr, parser_opt);
 
 		//In case the document criation fails, gets the last xml parser error
 		xml_error=xmlGetLastError();
@@ -255,11 +248,11 @@ void XMLParser::restartNavigation(void)
 
 void XMLParser::restartParser(void)
 {
-	root_elem=curr_elem=NULL;
+	root_elem=curr_elem=nullptr;
 	if(xml_doc)
 	{
 		xmlFreeDoc(xml_doc);
-		xml_doc=NULL;
+		xml_doc=nullptr;
 	}
 	dtd_decl=xml_buffer=xml_decl="";
 
@@ -304,16 +297,16 @@ bool XMLParser::hasElement(unsigned tipo_elem)
 		/* Returns the verification if the current element has a parent.
 		 The element must be different from the root, because the root element
 		 is not connected to a parent */
-		return(curr_elem!=root_elem && curr_elem->parent!=NULL);
+		return(curr_elem!=root_elem && curr_elem->parent!=nullptr);
 	else if(tipo_elem==CHILD_ELEMENT)
 		//Returns the verification if the current element has children
-		return(curr_elem->children!=NULL);
+		return(curr_elem->children!=nullptr);
 	else if(tipo_elem==NEXT_ELEMENT)
-		return(curr_elem->next!=NULL);
+		return(curr_elem->next!=nullptr);
 	else
 		/* The second comparison in the expression is made for the root element
 		 because libxml2 places the previous element as the root itself */
-		return(curr_elem->prev!=NULL && curr_elem->prev!=root_elem);
+		return(curr_elem->prev!=nullptr && curr_elem->prev!=root_elem);
 }
 
 bool XMLParser::hasAttributes(void)
@@ -321,7 +314,7 @@ bool XMLParser::hasAttributes(void)
 	if(!root_elem)
 		throw Exception(ERR_OPR_NOT_ALOC_ELEM_TREE,__PRETTY_FUNCTION__,__FILE__,__LINE__);
 
-	return(curr_elem->properties!=NULL);
+	return(curr_elem->properties!=nullptr);
 }
 
 QString XMLParser::getElementContent(void)
@@ -361,7 +354,7 @@ const xmlNode *XMLParser::getCurrentElement(void)
 
 void XMLParser::getElementAttributes(map<QString, QString> &attributes)
 {
-	xmlAttr *elem_attribs=NULL;
+	xmlAttr *elem_attribs=nullptr;
 	QString attrib, value;
 
 	if(!root_elem)

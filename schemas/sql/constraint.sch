@@ -5,7 +5,7 @@
 %if @{decl-in-table} %then 
  $tb 
 %else
-[-- object: ] @{name} [ | type: ] @{sql-object} [ -- ] $br
+[-- object: ] @{name} [ | type: ] @{sql-object} [ --] $br
  %if @{table} %then
   [ALTER TABLE ] @{table} [ ADD ]
   %end
