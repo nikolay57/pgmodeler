@@ -51,6 +51,7 @@
 #include "configurationform.h"
 #include "modelexportform.h"
 #include "objectrenamewidget.h"
+#include "sqlappendwidget.h"
 
 //Global forms and widgets
 AboutForm *about_form=nullptr;
@@ -88,6 +89,7 @@ ObjectDepsRefsWidget *deps_refs_wgt=nullptr;
 ConfigurationForm *configuration_form=nullptr;
 ModelExportForm *export_form=nullptr;
 ObjectRenameWidget *objectrename_wgt=nullptr;
+SQLAppendWidget *sqlappend_wgt=nullptr;
 
 MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)
 {
@@ -165,6 +167,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags) : QMainWindow(par
 		task_prog_wgt=new TaskProgressWidget();
 		deps_refs_wgt=new ObjectDepsRefsWidget(this);
 		objectrename_wgt=new ObjectRenameWidget(this);
+		sqlappend_wgt=new SQLAppendWidget(this);
 	}
 	catch(Exception &e)
 	{
